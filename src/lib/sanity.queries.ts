@@ -1,8 +1,7 @@
 import { groq } from "next-sanity";
 
 /**
- * 1. QUERY PENGATURAN GLOBAL (SINGLETON)
- * Mengambil data identitas situs, kontak, dan logo.
+ * 1. QUERY PENGATURAN GLOBAL
  */
 export const settingsQuery = groq`
   *[_type == "settings"][0] {
@@ -18,14 +17,15 @@ export const settingsQuery = groq`
 
 /**
  * 2. QUERY DAFTAR BERITA
- * Mengambil ringkasan berita untuk homepage/listing.
+ * PERBAIKAN: Mengambil title kategori dan nama penulis menggunakan "->"
  */
 export const newsQuery = groq`
   *[_type == "news"] | order(publishedAt desc) {
     _id,
     title,
     "slug": slug.current,
-    category,
+    "category": category->title,
+    "author": author->name,
     "mainImage": mainImage.asset->url,
     publishedAt
   }
@@ -33,23 +33,23 @@ export const newsQuery = groq`
 
 /**
  * 3. QUERY DETAIL BERITA BERDASARKAN SLUG
- * Mengambil isi konten lengkap (body) untuk halaman detail.
+ * PERBAIKAN: Dereference category & author agar body tidak error
  */
 export const singleNewsQuery = groq`
   *[_type == "news" && slug.current == $slug][0] {
     _id,
     title,
     "slug": slug.current,
-    category,
+    "category": category->title,
+    "author": author->name,
     "mainImage": mainImage.asset->url,
     publishedAt,
-    body // Rich Text dari Sanity Portable Text
+    body 
   }
 `;
 
 /**
  * 4. QUERY ARRAY SLUG BERITA
- * Digunakan untuk generateStaticParams (SEO & Kecepatan).
  */
 export const newsSlugsQuery = groq`
   *[_type == "news" && defined(slug.current)][].slug.current
@@ -57,7 +57,6 @@ export const newsSlugsQuery = groq`
 
 /**
  * 5. QUERY AGENDA & KTA
- * Mengambil informasi pendaftaran KTA.
  */
 export const agendaQuery = groq`
   *[_type == "agenda"][0] {
@@ -69,7 +68,6 @@ export const agendaQuery = groq`
 
 /**
  * 6. QUERY QUOTE KETUA UMUM
- * Mengambil kutipan inspiratif dan foto tokoh.
  */
 export const quoteQuery = groq`
   *[_type == "quote"][0] {

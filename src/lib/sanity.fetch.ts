@@ -4,37 +4,38 @@ import {
   newsQuery, 
   agendaQuery, 
   quoteQuery,
-  singleNewsQuery,  // Query baru untuk detail
-  newsSlugsQuery    // Query baru untuk static params
+  singleNewsQuery, 
+  newsSlugsQuery 
 } from "./sanity.queries";
 
 /**
- * MENGAMBIL DATA HALAMAN UTAMA
- * Digunakan di app/page.tsx untuk performa maksimal dengan Promise.all
+ * 1. MENGAMBIL DATA HALAMAN UTAMA
+ * Revalidate: 60 detik (Update data otomatis setiap menit)
  */
 export async function getHomePageData() {
   const [settings, news, agenda, quote] = await Promise.all([
-    client.fetch(settingsQuery),
-    client.fetch(newsQuery),
-    client.fetch(agendaQuery),
-    client.fetch(quoteQuery),
+    client.fetch(settingsQuery, {}, { next: { revalidate: 60 } }),
+    client.fetch(newsQuery, {}, { next: { revalidate: 60 } }),
+    client.fetch(agendaQuery, {}, { next: { revalidate: 60 } }),
+    client.fetch(quoteQuery, {}, { next: { revalidate: 60 } }),
   ]);
 
   return { settings, news, agenda, quote };
 }
 
 /**
- * MENGAMBIL DETAIL BERITA BERDASARKAN SLUG
- * Digunakan di app/berita/[slug]/page.tsx
+ * 2. MENGAMBIL DETAIL BERITA BERDASARKAN SLUG
  */
 export async function getNewsBySlug(slug: string) {
-  return client.fetch(singleNewsQuery, { slug });
+  // Pastikan parameter { slug } dikirim sebagai argumen kedua
+  return client.fetch(singleNewsQuery, { slug }, { next: { revalidate: 60 } });
 }
 
 /**
- * MENGAMBIL SEMUA SLUG BERITA
- * Digunakan untuk generateStaticParams (SEO & Kecepatan)
+ * 3. MENGAMBIL SEMUA SLUG BERITA
+ * Digunakan untuk generateStaticParams agar SEO mantap
  */
-export async function getAllNewsSlugs() {
-  return client.fetch(newsSlugsQuery);
+export async function getAllNewsSlugs(): Promise<string[]> {
+  const slugs = await client.fetch(newsSlugsQuery, {}, { next: { revalidate: 60 } });
+  return slugs || [];
 }
