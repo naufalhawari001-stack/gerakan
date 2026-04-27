@@ -9,7 +9,6 @@ export default defineType({
       name: 'title',
       title: 'Judul Berita',
       type: 'string',
-      // Tambahkan ": any" atau tipe Rule agar TypeScript tidak protes
       validation: (Rule: any) => Rule.required(),
     }),
     defineField({
@@ -22,17 +21,20 @@ export default defineType({
       },
       validation: (Rule: any) => Rule.required(),
     }),
+    // PERBAIKAN: Menggunakan referensi ke skema category
     defineField({
       name: 'category',
       title: 'Kategori',
-      type: 'string',
-      options: {
-        list: [
-          { title: 'Aksi Sosial', value: 'Aksi Sosial' },
-          { title: 'Politik', value: 'Politik' },
-          { title: 'Pemberdayaan', value: 'Pemberdayaan' },
-        ],
-      },
+      type: 'reference',
+      to: [{ type: 'category' }],
+      validation: (Rule: any) => Rule.required(),
+    }),
+    // TAMBAHAN: Referensi ke skema author (Penulis)
+    defineField({
+      name: 'author',
+      title: 'Penulis',
+      type: 'reference',
+      to: [{ type: 'author' }],
       validation: (Rule: any) => Rule.required(),
     }),
     defineField({
@@ -48,14 +50,47 @@ export default defineType({
       name: 'publishedAt',
       title: 'Tanggal Publikasi',
       type: 'datetime',
+      initialValue: () => new Date().toISOString(),
       validation: (Rule: any) => Rule.required(),
+    }),
+    defineField({
+      name: 'excerpt',
+      title: 'Ringkasan (Snippet)',
+      type: 'text',
+      rows: 3,
+      description: 'Muncul di halaman depan daftar berita.',
+      validation: (Rule: any) => Rule.max(200),
     }),
     defineField({
       name: 'body',
       title: 'Isi Berita',
       type: 'array',
-      of: [{ type: 'block' }],
+      of: [
+        { type: 'block' },
+        { 
+          type: 'image',
+          options: { hotspot: true },
+          fields: [
+            {
+              name: 'alt',
+              type: 'string',
+              title: 'Alternative Text',
+            }
+          ]
+        }
+      ],
       validation: (Rule: any) => Rule.required(),
     }),
   ],
+  preview: {
+    select: {
+      title: 'title',
+      author: 'author.name',
+      media: 'mainImage',
+    },
+    prepare(selection) {
+      const { author } = selection;
+      return { ...selection, subtitle: author ? `Oleh: ${author}` : '' };
+    },
+  },
 });
