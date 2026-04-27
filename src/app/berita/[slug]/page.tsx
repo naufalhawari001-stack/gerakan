@@ -6,7 +6,57 @@ import { PortableText } from "@portabletext/react";
 import { getNewsBySlug, getAllNewsSlugs } from "@/lib/sanity.fetch";
 import Footer from "@/components/Footer";
 import HeaderDetail from "@/components/HeaderDetail";
+import { Metadata } from "next";
 
+/**
+ * 1. DYNAMIC SEO & WHATSAPP THUMBNAIL
+ * Fungsi ini membuat Google dan WhatsApp mendeteksi data spesifik berita ini.
+ */
+export async function generateMetadata({ 
+  params 
+}: { 
+  params: Promise<{ slug: string }> 
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const news = await getNewsBySlug(slug);
+
+  if (!news) return { title: "Berita Tidak Ditemukan" };
+
+  const title = `${news.title} | Gerakan Rakyat BMS`;
+  const description = news.excerpt || "Baca berita terbaru dari Gerakan Rakyat BMS untuk perubahan Banyumas yang lebih baik.";
+  // Pastikan URL image valid dari Sanity
+  const ogImage = news.mainImage || "/og-image.jpg"; 
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      url: `https://gerakanrakyatbms.com/berita/${slug}`,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: news.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
+
+/**
+ * 2. CUSTOM PORTABLE TEXT COMPONENTS
+ * Mengatur tampilan teks berita agar font besar dan jeda pas.
+ */
 const portableTextComponents = {
   block: {
     normal: ({ children }: any) => (
@@ -39,7 +89,11 @@ export async function generateStaticParams() {
   return slugs.map((slug: string) => ({ slug }));
 }
 
-export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function NewsDetailPage({ 
+  params 
+}: { 
+  params: Promise<{ slug: string }> 
+}) {
   const { slug } = await params;
   const news = await getNewsBySlug(slug);
 
@@ -101,7 +155,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 </button>
               </div>
 
-              {/* GAMBAR UTAMA - Rounded dikurangi ke 2xl */}
+              {/* GAMBAR UTAMA - Rounded diperkecil agar lebih profesional (rounded-2xl) */}
               <figure className="mb-16">
                 <div className="relative h-[300px] md:h-[600px] w-full overflow-hidden rounded-2xl shadow-2xl border-8 border-white bg-gray-50">
                   <Image 
@@ -118,7 +172,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
               </figure>
 
               {/* ISI BERITA */}
-              <div className="prose prose-xl max-w-none first-letter:text-8xl first-letter:font-black first-letter:text-orange-600 first-letter:mr-4 first-letter:float-left first-letter:leading-[0.85] first-letter:mt-2">
+              <article className="prose prose-xl max-w-none first-letter:text-8xl first-letter:font-black first-letter:text-orange-600 first-letter:mr-4 first-letter:float-left first-letter:leading-[0.85] first-letter:mt-2">
                 {news.body ? (
                     <PortableText 
                       value={news.body} 
@@ -127,13 +181,13 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 ) : (
                     <p className="text-center italic text-gray-400">Konten tidak tersedia.</p>
                 )}
-              </div>
+              </article>
             </div>
 
             {/* KOLOM KANAN: SIDEBAR STICKY */}
             <aside className="lg:col-span-4 lg:sticky lg:top-32 self-start">
               <div className="space-y-10">
-                {/* TOPIK POPULER - Rounded dikurangi ke xl */}
+                {/* TOPIK POPULER - Rounded diperkecil (rounded-xl) */}
                 <div className="bg-gray-50/50 rounded-xl p-8 border border-gray-100 backdrop-blur-sm shadow-sm">
                   <h3 className="font-black text-[10px] uppercase tracking-[0.3em] mb-8 text-orange-600 border-l-4 border-orange-600 pl-4">Populer</h3>
                   <ul className="space-y-6">
@@ -145,13 +199,13 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                   </ul>
                 </div>
 
-                {/* CTA GABUNG - Rounded dikurangi ke xl */}
+                {/* CTA GABUNG - Rounded diperkecil (rounded-xl) */}
                 <div className="bg-gray-900 p-10 rounded-xl text-white relative shadow-2xl overflow-hidden group">
                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-600/20 rounded-full -mr-16 -mt-16 blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
                    <div className="relative z-10">
                       <h4 className="font-black text-2xl leading-none mb-4 uppercase tracking-tighter italic">Siap Jadi Pejuang?</h4>
                       <p className="text-[11px] text-gray-400 leading-relaxed mb-8 uppercase tracking-widest font-bold">#BanyumasBersatu</p>
-                      <Link href="/gabung" className="block w-full bg-orange-600 text-white text-[11px] font-black py-5 rounded-lg text-center uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all">
+                      <Link href="/gabung" className="block w-full bg-orange-600 text-white text-[11px] font-black py-5 rounded-lg text-center uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all shadow-lg">
                         Daftar KTA
                       </Link>
                    </div>
