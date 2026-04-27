@@ -1,13 +1,14 @@
 import { defineConfig } from 'sanity';
 import { deskTool } from 'sanity/desk';
 import { visionTool } from '@sanity/vision';
-import { schema } from './sanity/schema';
+// PERBAIKAN: Jika file ini ada di dalam folder 'sanity', cukup panggil './schema'
+import { schema } from './schema'; 
 
 export default defineConfig({
   name: 'default',
   title: 'Gerakan Rakyat Admin',
 
-  // Pakai ID yang ada di gambar kamu (image_d81db2.png)
+  // Project ID sudah sesuai dengan gambar image_d81db2.png
   projectId: '01hs5q07', 
   dataset: 'production',
 
