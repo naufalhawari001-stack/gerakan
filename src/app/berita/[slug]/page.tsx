@@ -97,11 +97,10 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
     <main className="bg-white min-h-screen relative font-sans">
       <HeaderDetail />
       
-      {/* PERBAIKAN 2: Jarak Top Padding diperkecil (dari pt-32 ke pt-16) */}
+      {/* JARAK HEADER KE KONTEN DIPERSEMPIT */}
       <div className="relative pt-12 md:pt-16 pb-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           
-          {/* Breadcrumb: Margin bottom diperkecil */}
           <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] mb-6 text-gray-400">
             <Link href="/" className="text-black hover:text-orange-600 transition-colors">Home</Link>
             <ChevronRight size={10} />
@@ -111,12 +110,11 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <div className="lg:col-span-8">
               
-              {/* PERBAIKAN 1: Judul H1 (Hilangkan class 'italic') & perkecil margin bottom */}
+              {/* JUDUL TEGAK (NON-ITALIC) */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-[1.15] tracking-tight">
                 {news.title}
               </h1>
 
-              {/* Meta info: Padding & Margin diperkecil agar lebih rapat */}
               <div className="flex flex-col md:flex-row md:items-center justify-between border-y border-gray-100 py-6 mb-8 gap-6">
                 <div className="flex items-center gap-5">
                   <div className="relative w-14 h-14 rounded-full overflow-hidden border border-gray-100 shadow-sm bg-orange-50 flex-shrink-0">
@@ -142,7 +140,6 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 <ShareAction title={news.title} url={currentUrl} />
               </div>
 
-              {/* Gambar Utama: Jarak mb diperkecil */}
               <figure className="mb-10 group relative">
                 <div className="relative h-[300px] md:h-[550px] w-full overflow-hidden rounded-[2rem] shadow-2xl border-4 md:border-8 border-white bg-gray-100">
                   <Image src={finalThumbnail} alt={news.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" priority />
@@ -157,7 +154,6 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 </figcaption>
               </figure>
 
-              {/* Konten Artikel */}
               <article className="prose prose-xl max-w-none first-letter:text-8xl first-letter:font-black first-letter:text-orange-600 first-letter:mr-4 first-letter:float-left first-letter:leading-[0.85] pb-4">
                 <PortableText value={news.body} components={portableTextComponents} />
               </article>
@@ -168,17 +164,32 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
             <aside className="lg:col-span-4 lg:sticky lg:top-24 self-start">
                <FollowUs socials={news.socialMedia} />
 
+               {/* SIDEBAR POPULER DENGAN KATEGORI & TANGGAL (REFERENSI IMAGE_5B4578.PNG) */}
                <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm mb-8 transition-all duration-500 hover:shadow-xl">
                  <div className="flex items-center gap-4 mb-8">
                     <div className="w-1.5 h-7 bg-[#FF4500] rounded-full"></div>
                     <h3 className="text-lg font-black text-gray-800 uppercase tracking-widest">Populer</h3>
                  </div>
-                 <ul className="space-y-6 text-[11px] font-bold uppercase text-gray-600">
+                 <ul className="space-y-8">
                    {popularPosts.map((post: any, index: number) => (
-                     <li key={post._id} className="border-b last:border-0 pb-3">
-                       <Link href={`/berita/${post.slug}`} className="hover:text-orange-600 transition-colors flex gap-4 items-center group/item">
-                         <span className="text-2xl font-black text-gray-100 group-hover/item:text-orange-100 transition-colors">{(index + 1).toString().padStart(2, '0')}</span>
-                         <span className="line-clamp-2 leading-tight tracking-tight text-gray-800 group-hover/item:text-orange-600">{post.title}</span>
+                     <li key={post._id} className="border-b last:border-0 pb-5">
+                       <Link href={`/berita/${post.slug}`} className="flex gap-4 items-start group/item">
+                         <span className="text-2xl font-black text-gray-100 group-hover/item:text-orange-200 transition-colors pt-1">
+                           {(index + 1).toString().padStart(2, '0')}
+                         </span>
+                         <div className="flex flex-col gap-1.5">
+                            <span className="text-[11px] font-bold uppercase leading-tight tracking-tight text-gray-800 group-hover/item:text-orange-600 transition-colors line-clamp-2">
+                              {post.title}
+                            </span>
+                            {/* META INFO KECIL: KATEGORI & TANGGAL */}
+                            <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.15em] text-gray-400">
+                               <span className="text-orange-600">{post.category || "Berita"}</span>
+                               <span className="opacity-30">•</span>
+                               <span>
+                                 {new Date(post.publishedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                               </span>
+                            </div>
+                         </div>
                        </Link>
                      </li>
                    ))}

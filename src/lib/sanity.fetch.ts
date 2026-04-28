@@ -76,16 +76,19 @@ export async function getRelatedNews(categoryId: string, currentId: string) {
 
 /**
  * 4. MENGAMBIL DAFTAR BERITA TERBARU (SIDEBAR POPULER)
- * Mengambil 5 berita terbaru secara dinamis.
+ * FIX: Menambahkan "category" dan "publishedAt" ke dalam query.
  */
 export async function getLatestNews(limit = 5) {
   const query = groq`
     *[_type == "news" && !(_id in path("drafts.**"))] | order(publishedAt desc)[0...${limit}] {
       _id,
       title,
-      "slug": slug.current
+      "slug": slug.current,
+      "category": category->title,
+      publishedAt
     }
   `;
+  
   return client.fetch(
     query, 
     {}, 
