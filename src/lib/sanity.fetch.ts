@@ -1,3 +1,4 @@
+import { groq } from "next-sanity"; // Pastikan import groq ada di sini
 import { client } from "./sanity.client";
 import { 
   settingsQuery, 
@@ -10,8 +11,7 @@ import {
 
 /**
  * 1. MENGAMBIL DATA HALAMAN UTAMA
- * Revalidate diturunkan ke 30 detik agar perubahan cepat muncul.
- * Menambahkan perspective: 'published' untuk memastikan berita lama tetap aman.
+ * Revalidate: 30 detik (Update data otomatis)
  */
 export async function getHomePageData() {
   try {
@@ -49,13 +49,39 @@ export async function getNewsBySlug(slug: string) {
 }
 
 /**
- * 3. MENGAMBIL SEMUA SLUG BERITA
+ * 3. MENGAMBIL BERITA TERKAIT
+ * Mencari berita dengan kategori yang sama, tapi mengecualikan berita yang sedang dibuka.
+ */
+export async function getRelatedNews(categoryId: string, currentId: string) {
+  if (!categoryId || !currentId) return [];
+
+  const relatedQuery = groq`
+    *[_type == "news" && category._ref == $categoryId && _id != $currentId && !(_id in path("drafts.**"))][0...3] {
+      _id,
+      title,
+      "slug": slug.current,
+      "category": category->title,
+      "mainImage": mainImage.asset->url,
+      "youtubeUrl": youtubeUrl,
+      publishedAt
+    }
+  `;
+
+  return client.fetch(
+    relatedQuery, 
+    { categoryId, currentId }, 
+    { next: { revalidate: 30, tags: ["news"] } }
+  );
+}
+
+/**
+ * 4. MENGAMBIL SEMUA SLUG BERITA
  */
 export async function getAllNewsSlugs(): Promise<string[]> {
   const slugs = await client.fetch(
     newsSlugsQuery, 
     {}, 
-    { next: { revalidate: 3600 } } // Slug cukup 1 jam sekali
+    { next: { revalidate: 3600 } } 
   );
   return slugs || [];
 }
