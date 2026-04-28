@@ -4,19 +4,21 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'cdn.sanity.io',
-        port: '',
+        hostname: 'cdn.sanity.io', // Untuk gambar dari Sanity
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com', // Untuk thumbnail YouTube
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.instagram.com', // Untuk thumbnail Instagram
+      },
+      {
+        protocol: 'https',
+        hostname: '*.cdninstagram.com', // Untuk CDN Instagram
       },
     ],
-  },
-  // Mengaktifkan fitur-fitur modern Next.js
-  typescript: {
-    // Set ke true jika ingin build tetap lanjut meskipun ada sedikit error type (opsional)
-    ignoreBuildErrors: false,
-  },
-  eslint: {
-    // Mempercepat build dengan mengabaikan linting saat deploy
-    ignoreDuringBuilds: true,
   },
 };
 
