@@ -16,7 +16,7 @@ export default async function BeritaPage() {
     <main className="bg-white min-h-screen relative font-sans">
       <DynamicHeader />
 
-      {/* HEADER SECTION (Judul Tegak / Non-Italic) */}
+      {/* MODERN HEADER (Judul Tegak) */}
       <section className="bg-[#1a1a1a] text-white pt-44 pb-20 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#FF4500]/5 rounded-full blur-[100px] -mr-64 -mt-64"></div>
         
@@ -39,7 +39,7 @@ export default async function BeritaPage() {
         </div>
       </section>
 
-      {/* CONTENT SECTION */}
+      {/* CONTENT AREA */}
       <div className="relative bg-white py-16 md:py-24">
         <div className="max-w-[1440px] mx-auto px-8">
            <NewsList initialNews={data.news} />

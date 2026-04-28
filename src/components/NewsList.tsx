@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, PlayCircle, Instagram } from "lucide-react";
 
 interface NewsListProps {
   initialNews: any[];
@@ -56,7 +56,7 @@ export default function NewsList({ initialNews }: NewsListProps) {
 
   return (
     <div className="max-w-[1440px] mx-auto pb-24">
-      {/* SEARCH & FILTER */}
+      {/* SEARCH & FILTER AREA */}
       <div className="flex flex-col lg:flex-row gap-6 mb-16 -mt-24 relative z-20">
         <div className="relative flex-1 group">
           <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
@@ -64,8 +64,8 @@ export default function NewsList({ initialNews }: NewsListProps) {
           </div>
           <input
             type="text"
-            placeholder="Cari berita..."
-            className="w-full bg-white border border-gray-100 shadow-xl rounded-2xl py-6 pl-16 pr-8 text-gray-900 focus:ring-4 focus:ring-[#FF4500]/10 outline-none transition-all font-bold text-sm"
+            placeholder="Cari berita atau video..."
+            className="w-full bg-white border border-gray-100 shadow-2xl rounded-2xl py-6 pl-16 pr-8 text-gray-900 focus:ring-4 focus:ring-[#FF4500]/10 outline-none transition-all font-bold text-sm"
             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
         </div>
@@ -75,7 +75,7 @@ export default function NewsList({ initialNews }: NewsListProps) {
               key={cat}
               onClick={() => { setActiveCategory(cat); setCurrentPage(1); }}
               className={`px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md ${
-                activeCategory === cat ? "bg-[#FF4500] text-white" : "bg-white text-gray-500 hover:bg-gray-50"
+                activeCategory === cat ? "bg-[#FF4500] text-white shadow-lg shadow-orange-600/20" : "bg-white text-gray-500 hover:bg-gray-50"
               }`}
             >
               {cat}
@@ -84,19 +84,51 @@ export default function NewsList({ initialNews }: NewsListProps) {
         </div>
       </div>
 
-      {/* GRID 4 KOLOM (SAMA DENGAN HOMEPAGE) */}
+      {/* GRID 4 KOLOM X 4 BARIS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
         {currentItems.length > 0 ? (
           currentItems.map((item) => {
             const thumbnailSrc = item.mainImage || getYouTubeThumbnail(item.youtubeUrl) || getInstagramThumbnail(item.instagramUrl) || "/placeholder-news.jpg";
+            
+            // LOGIKA DETEKSI VIDEO: Berdasarkan kategori atau adanya URL video
+            const isVideo = item.category?.toLowerCase() === "video" || !!item.youtubeUrl || item.instagramUrl?.includes('/reels/');
+            const isInstagramPost = !item.mainImage && !!item.instagramUrl && !item.instagramUrl?.includes('/reels/');
+
             return (
               <article key={item._id} className="group flex flex-col">
                 <Link href={`/berita/${item.slug}`} className="relative aspect-video w-full overflow-hidden rounded-2xl mb-4 bg-gray-100 shadow-sm border border-gray-50">
-                  <Image src={thumbnailSrc} alt={item.title} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <Image 
+                    src={thumbnailSrc} 
+                    alt={item.title} 
+                    fill 
+                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                  />
+
+                  {/* ICON OVERLAY (PLAY UNTUK VIDEO) */}
+                  {isVideo && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/5 group-hover:bg-black/20 transition-all">
+                      <div className="bg-white/20 backdrop-blur-md p-2.5 rounded-full border border-white/30 shadow-xl transition-transform duration-500 group-hover:scale-110">
+                         <PlayCircle size={28} className="text-white" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ICON OVERLAY (INSTAGRAM POST) */}
+                  {isInstagramPost && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/5 group-hover:bg-black/20 transition-all">
+                      <div className="bg-white/20 backdrop-blur-md p-2.5 rounded-full border border-white/30 shadow-xl transition-transform duration-500 group-hover:scale-110">
+                         <Instagram size={24} className="text-white" />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="absolute top-3 left-3">
-                    <span className="bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-md">{item.category}</span>
+                    <span className="bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-md">
+                      {item.category}
+                    </span>
                   </div>
                 </Link>
+
                 <div className="flex flex-col flex-1">
                   <h3 className="text-base font-bold text-gray-900 leading-snug tracking-tight group-hover:text-[#FF4500] transition-colors line-clamp-2 mb-2">
                     <Link href={`/berita/${item.slug}`}>{item.title}</Link>
@@ -109,7 +141,9 @@ export default function NewsList({ initialNews }: NewsListProps) {
             );
           })
         ) : (
-          <div className="col-span-full py-32 text-center text-gray-400 font-bold uppercase tracking-widest">Berita tidak ditemukan</div>
+          <div className="col-span-full py-32 text-center text-gray-400 font-bold uppercase tracking-widest">
+            Tidak ada konten ditemukan
+          </div>
         )}
       </div>
 

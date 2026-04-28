@@ -50,7 +50,6 @@ export async function getNewsBySlug(slug: string) {
 
 /**
  * 3. MENGAMBIL BERITA TERKAIT
- * Mencari berita dengan kategori yang sama, mengecualikan berita aktif.
  */
 export async function getRelatedNews(categoryId: string, currentId: string) {
   if (!categoryId || !currentId) return [];
@@ -77,7 +76,6 @@ export async function getRelatedNews(categoryId: string, currentId: string) {
 
 /**
  * 4. MENGAMBIL DAFTAR BERITA TERBARU (SIDEBAR POPULER)
- * Mengambil berita terbaru lengkap dengan kategori dan tanggal.
  */
 export async function getLatestNews(limit = 5) {
   const query = groq`
@@ -99,9 +97,9 @@ export async function getLatestNews(limit = 5) {
 
 /**
  * 5. MENGAMBIL BERITA KHUSUS VIDEO (Untuk Homepage Video Section)
- * Mengambil berita yang memiliki link YouTube atau Instagram.
+ * FIX: Limit diubah ke 4 agar pas dengan grid 4 kolom di homepage.
  */
-export async function getVideoNews(limit = 3) {
+export async function getVideoNews(limit = 4) {
   const query = groq`
     *[_type == "news" && (defined(youtubeUrl) || defined(instagramUrl)) && !(_id in path("drafts.**"))] | order(publishedAt desc)[0...${limit}] {
       _id,
@@ -123,7 +121,6 @@ export async function getVideoNews(limit = 3) {
 
 /**
  * 6. MENGAMBIL SEMUA SLUG BERITA
- * Digunakan untuk generateStaticParams (SEO & Build Speed)
  */
 export async function getAllNewsSlugs(): Promise<string[]> {
   const slugs = await client.fetch(
