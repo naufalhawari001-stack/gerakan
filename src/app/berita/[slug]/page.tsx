@@ -15,7 +15,7 @@ import { Metadata } from "next";
  * 1. HELPER: EKSTRAK ID YOUTUBE & THUMBNAIL
  */
 const getYouTubeId = (url: string) => {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const regExp = /^.*(youtu.be\/|v\/|u\/|w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url?.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
 };
@@ -97,7 +97,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
     <main className="bg-white min-h-screen relative font-sans">
       <HeaderDetail />
       
-      {/* JARAK HEADER KE KONTEN DIPERSEMPIT */}
+      {/* TIGHT HEADER SPACE */}
       <div className="relative pt-12 md:pt-16 pb-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           
@@ -110,12 +110,15 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <div className="lg:col-span-8">
               
-              {/* JUDUL TEGAK (NON-ITALIC) */}
+              {/* JUDUL NON-ITALIC */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-[1.15] tracking-tight">
                 {news.title}
               </h1>
 
+              {/* META INFO: SHARE POSITIONED NEXT TO READ TIME ON MOBILE */}
               <div className="flex flex-col md:flex-row md:items-center justify-between border-y border-gray-100 py-6 mb-8 gap-6">
+                
+                {/* Author Info */}
                 <div className="flex items-center gap-5">
                   <div className="relative w-14 h-14 rounded-full overflow-hidden border border-gray-100 shadow-sm bg-orange-50 flex-shrink-0">
                     <div className="w-full h-full flex items-center justify-center text-gray-400"><User size={28} /></div>
@@ -126,18 +129,25 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                   </div>
                 </div>
 
-                <div className="flex items-center gap-8 md:gap-12 text-sm font-semibold text-gray-600">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-400 uppercase flex items-center gap-1.5 font-black tracking-widest"><Calendar size={12}/> Terbit</span>
-                    {new Date(news.publishedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                {/* Wrapper untuk Date, Read Time, dan Share Button (Satu baris di mobile) */}
+                <div className="flex items-center justify-between md:justify-end gap-6 md:gap-12 w-full md:w-auto">
+                  <div className="flex items-center gap-8 md:gap-12 text-sm font-semibold text-gray-600">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-gray-400 uppercase flex items-center gap-1.5 font-black tracking-widest"><Calendar size={12}/> Terbit</span>
+                      <span className="whitespace-nowrap">{new Date(news.publishedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-gray-400 uppercase flex items-center gap-1.5 font-black tracking-widest"><Clock size={12}/> Baca</span>
+                      <span className="whitespace-nowrap">{readingTime} Menit</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-400 uppercase flex items-center gap-1.5 font-black tracking-widest"><Clock size={12}/> Baca</span>
-                    {readingTime} Menit
+                  
+                  {/* Share button sekarang berada di samping info Baca pada mobile */}
+                  <div className="flex-shrink-0">
+                    <ShareAction title={news.title} url={currentUrl} />
                   </div>
                 </div>
 
-                <ShareAction title={news.title} url={currentUrl} />
               </div>
 
               <figure className="mb-10 group relative">
@@ -164,7 +174,6 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
             <aside className="lg:col-span-4 lg:sticky lg:top-24 self-start">
                <FollowUs socials={news.socialMedia} />
 
-               {/* SIDEBAR POPULER DENGAN KATEGORI & TANGGAL (REFERENSI IMAGE_5B4578.PNG) */}
                <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm mb-8 transition-all duration-500 hover:shadow-xl">
                  <div className="flex items-center gap-4 mb-8">
                     <div className="w-1.5 h-7 bg-[#FF4500] rounded-full"></div>
@@ -181,7 +190,6 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                             <span className="text-[11px] font-bold uppercase leading-tight tracking-tight text-gray-800 group-hover/item:text-orange-600 transition-colors line-clamp-2">
                               {post.title}
                             </span>
-                            {/* META INFO KECIL: KATEGORI & TANGGAL */}
                             <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.15em] text-gray-400">
                                <span className="text-orange-600">{post.category || "Berita"}</span>
                                <span className="opacity-30">•</span>
