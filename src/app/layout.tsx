@@ -9,7 +9,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  // 1. Basic SEO
+  // 1. Basic SEO & Title Template
+  // template: "%s | Gerakan Rakyat BMS" -> Otomatis menggabung judul berita + Brand
   title: {
     default: "Gerakan Rakyat BMS | Perubahan & Gotong Royong",
     template: "%s | Gerakan Rakyat BMS",
@@ -19,8 +20,9 @@ export const metadata: Metadata = {
   authors: [{ name: "Aris Suharyanto" }],
   creator: "Aris Suharyanto",
   publisher: "Gerakan Rakyat BMS",
+  metadataBase: new URL("https://gerakanrakyatbms.com"), // Menghindari error path pada OG Image
   
-  // 2. Open Graph (Thumbnail WhatsApp & FB)
+  // 2. Open Graph (Thumbnail WhatsApp, FB, Telegram)
   openGraph: {
     type: "website",
     locale: "id_ID",
@@ -30,7 +32,7 @@ export const metadata: Metadata = {
     description: "Gabung bersama kami di Gerakan Rakyat BMS. Suarakan perubahan untuk Banyumas yang lebih baik.",
     images: [
       {
-        url: "/og-image.jpg", // WAJIB ada di /public/og-image.jpg
+        url: "/og-image.jpg", // File ini harus ada di /public/og-image.jpg
         width: 1200,
         height: 630,
         alt: "Gerakan Rakyat BMS Banner",
@@ -46,13 +48,19 @@ export const metadata: Metadata = {
     images: ["/og-image.jpg"],
   },
 
-  // 4. Search Engine Verification (DI PERBAIKI DI SINI)
+  // 4. Icons (Favicon)
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png", // Icon untuk iPhone (jika ada)
+  },
+
+  // 5. Search Engine Verification
   verification: {
-    // Cukup masukkan kodenya saja, jangan tag HTML-nya
     google: "2vAK4fS7Gxwo38J6T18EOFGi0E9OPaxBYKwBFkDrbFI",
   },
 
-  // 5. Robots
+  // 6. Robots
   robots: {
     index: true,
     follow: true,

@@ -2,7 +2,6 @@ import { groq } from "next-sanity";
 
 /**
  * 1. QUERY PENGATURAN GLOBAL
- * Mengambil identitas situs, logo, dan link sosial media.
  */
 export const settingsQuery = groq`
   *[_type == "settings"][0] {
@@ -18,10 +17,11 @@ export const settingsQuery = groq`
 
 /**
  * 2. QUERY DAFTAR BERITA (Untuk Homepage & Arsip)
- * Menarik youtubeUrl & instagramUrl untuk mendukung auto-thumbnail.
+ * PERBAIKAN: Kita ambil data lebih banyak (misal 50) agar setelah difilter 
+ * kategori "Video" di frontend, sisa datanya masih cukup untuk tampil 8 card.
  */
 export const newsQuery = groq`
-  *[_type == "news" && !(_id in path("drafts.**"))] | order(publishedAt desc) {
+  *[_type == "news" && !(_id in path("drafts.**"))] | order(publishedAt desc)[0...50] {
     _id,
     title,
     "slug": slug.current,
@@ -31,16 +31,13 @@ export const newsQuery = groq`
     "mainImage": mainImage.asset->url,
     "youtubeUrl": youtubeUrl,
     "instagramUrl": instagramUrl,
-    "excerpt": array::join(string::split((pt::text(body)), "")[0..150], "") + "...",
+    "excerpt": array::join(string::split((pt::text(body)), "")[0..200], "") + "...",
     publishedAt
   }
 `;
 
 /**
  * 3. QUERY DETAIL BERITA BERDASARKAN SLUG
- * - categoryRef: Untuk pencarian berita terkait.
- * - instagramUrl: Untuk auto-thumbnail & SEO.
- * - socialMedia: Mengambil data dari settings agar widget Follow Us berfungsi.
  */
 export const singleNewsQuery = groq`
   *[_type == "news" && slug.current == $slug && !(_id in path("drafts.**"))][0] {
@@ -56,13 +53,12 @@ export const singleNewsQuery = groq`
     "instagramUrl": instagramUrl,
     publishedAt,
     body,
-    // Mengambil data social media dari dokumen settings secara langsung
     "socialMedia": *[_type == "settings"][0].socialMedia
   }
 `;
 
 /**
- * 4. QUERY ARRAY SLUG BERITA (Untuk Static Generation)
+ * 4. QUERY ARRAY SLUG BERITA
  */
 export const newsSlugsQuery = groq`
   *[_type == "news" && defined(slug.current) && !(_id in path("drafts.**"))][].slug.current

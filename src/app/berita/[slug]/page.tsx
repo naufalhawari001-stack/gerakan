@@ -12,7 +12,7 @@ import FollowUs from "@/components/FollowUs";
 import { Metadata } from "next";
 
 /**
- * HELPER UNTUK SEO (Thumbnail tetap diambil untuk Share WA/FB)
+ * 1. HELPERS: THUMBNAIL GENERATORS (Untuk SEO & Fallback)
  */
 const getYouTubeThumbnail = (url: string) => {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -28,12 +28,12 @@ const getInstagramThumbnail = (url: string) => {
 };
 
 /**
- * CUSTOM PORTABLE TEXT COMPONENTS
+ * 2. CUSTOM PORTABLE TEXT COMPONENTS (Render Embed Media)
  */
 const portableTextComponents = {
   types: {
     youtube: ({ value }: any) => {
-      const id = value.url?.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/)?.[2];
+      const id = value.url?.match(/^.*(youtu.be\/|v\/|u\/\\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/)?.[2];
       return id ? (
         <div className="my-8 relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-black">
           <iframe src={`https://www.youtube.com/embed/${id}`} title="YouTube" allowFullScreen className="absolute inset-0 w-full h-full" />
@@ -55,12 +55,40 @@ const portableTextComponents = {
   },
 };
 
+/**
+ * 3. METADATA: FIXED DOUBLE BRANDING
+ */
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const news = await getNewsBySlug(slug);
+  
   if (!news) return { title: "Berita Tidak Ditemukan" };
-  const ogImage = news.mainImage || getYouTubeThumbnail(news.youtubeUrl) || getInstagramThumbnail(news.instagramUrl) || "/placeholder.jpg";
-  return { title: `${news.title} | Gerakan Rakyat BMS`, openGraph: { images: [{ url: ogImage }] } };
+  
+  // Ambil thumbnail terbaik untuk preview medsos
+  const ogImage = news.mainImage || 
+                  getYouTubeThumbnail(news.youtubeUrl) || 
+                  getInstagramThumbnail(news.instagramUrl) || 
+                  "/og-image.jpg";
+
+  return {
+    // FIX: Cukup return judul berita saja. 
+    // Nama brand "Gerakan Rakyat BMS" akan otomatis ditambah dari template layout.tsx
+    title: news.title, 
+    description: news.excerpt || "Baca berita terbaru dari Gerakan Rakyat Banyumas",
+    openGraph: {
+      title: news.title,
+      description: news.excerpt,
+      images: [{ url: ogImage }],
+      url: `https://gerakanrakyatbms.com/berita/${slug}`,
+      siteName: "Gerakan Rakyat BMS",
+      type: "article",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: news.title,
+      images: [ogImage],
+    },
+  };
 }
 
 export async function generateStaticParams() {
@@ -88,45 +116,53 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
       <div className="relative pt-10 md:pt-14 pb-16">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           
-          {/* Breadcrumb */}
+          {/* BREADCRUMB */}
           <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] mb-6 text-gray-400">
             <Link href="/" className="hover:text-orange-600 transition-colors">Home</Link>
             <ChevronRight size={10} />
-            <span className="bg-orange-600 text-white px-3 py-1 rounded-sm font-bold">{news.category || "Berita"}</span>
+            <span className="bg-orange-600 text-white px-3 py-1 rounded-sm font-bold uppercase">{news.category || "Berita"}</span>
           </nav>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <div className="lg:col-span-8">
               
-              {/* JUDUL TEGAK (FIXED) */}
+              {/* JUDUL TEGAK (TEGAS) */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-[1.15] tracking-tight">
                 {news.title}
               </h1>
 
-              {/* META INFO (FIXED POSITION) */}
+              {/* META INFO */}
               <div className="flex flex-col md:flex-row md:items-center justify-between border-y border-gray-100 py-6 mb-8 gap-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-gray-400"><User size={24} /></div>
+                  <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                    <User size={24} />
+                  </div>
                   <div>
                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Penulis</p>
-                    <p className="text-sm font-bold text-gray-700">{news.author || "Admin"}</p>
+                    <p className="text-sm font-bold text-gray-700 uppercase tracking-tight">{news.author || "Admin"}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto">
                   <div className="flex gap-8 text-xs font-semibold text-gray-500">
-                    <div className="flex flex-col"><span className="text-[9px] text-gray-400 uppercase font-black tracking-widest">Terbit</span>{new Date(news.publishedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</div>
-                    <div className="flex flex-col"><span className="text-[9px] text-gray-400 uppercase font-black tracking-widest">Baca</span>{readingTime} Menit</div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] text-gray-400 uppercase font-black tracking-widest">Terbit</span>
+                      {new Date(news.publishedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] text-gray-400 uppercase font-black tracking-widest">Baca</span>
+                      {readingTime} Menit
+                    </div>
                   </div>
                   <ShareAction title={news.title} url={currentUrl} />
                 </div>
               </div>
 
-              {/* GAMBAR UTAMA - HANYA MUNCUL JIKA ADA FILE GAMBAR (MENCEGAH DUPLIKAT VIDEO) */}
+              {/* MEDIA HEADER: HANYA MUNCUL JIKA ADA GAMBAR UTAMA (Mencegah Double Media) */}
               {news.mainImage && (
-                <figure className="mb-10">
-                  <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-[2rem] shadow-xl border-8 border-white">
-                    <Image src={news.mainImage} alt={news.title} fill className="object-cover" priority />
+                <figure className="mb-10 group">
+                  <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-[2rem] shadow-xl border-8 border-white bg-gray-50">
+                    <Image src={news.mainImage} alt={news.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" priority />
                   </div>
                   <figcaption className="text-[10px] text-gray-400 mt-4 text-center uppercase tracking-widest">
                      Foto: Dok. Gerakan Rakyat • {news.title}
@@ -134,21 +170,22 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 </figure>
               )}
 
-              {/* ISI BERITA (SPASI DIKECILKAN) */}
-              <article className="prose prose-xl max-w-none pb-0">
+              {/* ISI KONTEN (TIGHT SPACING) */}
+              <article className="prose prose-xl max-w-none pb-0 first-letter:text-7xl first-letter:font-black first-letter:text-orange-600 first-letter:mr-3 first-letter:float-left">
                 <PortableText value={news.body} components={portableTextComponents} />
               </article>
 
-              {/* BERITA TERKAIT (DIHIMPIT) */}
+              {/* RELATED POSTS (TIGHT MARGIN) */}
               <div className="mt-4">
                  <RelatedPosts posts={relatedPosts} />
               </div>
             </div>
 
+            {/* SIDEBAR */}
             <aside className="lg:col-span-4 lg:sticky lg:top-24 self-start">
                <FollowUs socials={news.socialMedia} />
 
-               {/* SIDEBAR POPULER */}
+               {/* POPULER SIDEBAR */}
                <div className="bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm mb-8">
                  <div className="flex items-center gap-4 mb-8">
                     <div className="w-1.5 h-7 bg-[#FF4500] rounded-full"></div>
@@ -158,9 +195,13 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                    {popularPosts.map((post: any, index: number) => (
                      <li key={post._id} className="border-b last:border-0 pb-5">
                        <Link href={`/berita/${post.slug}`} className="flex gap-4 items-start group/item">
-                         <span className="text-2xl font-black text-gray-100 group-hover/item:text-orange-200 pt-1">{(index + 1).toString().padStart(2, '0')}</span>
+                         <span className="text-2xl font-black text-gray-100 group-hover/item:text-orange-200 transition-colors pt-1">
+                           {(index + 1).toString().padStart(2, '0')}
+                         </span>
                          <div className="flex flex-col gap-1">
-                            <span className="text-[11px] font-bold uppercase text-gray-800 group-hover/item:text-orange-600 line-clamp-2">{post.title}</span>
+                            <span className="text-[11px] font-bold uppercase text-gray-800 group-hover/item:text-orange-600 transition-colors line-clamp-2 leading-tight">
+                              {post.title}
+                            </span>
                             <div className="flex items-center gap-2 text-[8px] font-black uppercase text-gray-400">
                                <span className="text-orange-600">{post.category}</span>
                                <span>•</span>
@@ -173,10 +214,12 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                  </ul>
                </div>
 
-               <div className="bg-black rounded-3xl p-8 text-white relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-600/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                  <h4 className="text-lg font-black italic uppercase leading-tight mb-4 relative z-10">Gabung Gerakan Rakyat</h4>
-                  <Link href="/pendaftaran" className="inline-block bg-orange-600 text-white px-8 py-3 rounded-full text-[10px] font-black uppercase hover:bg-white hover:text-black transition-all relative z-10">
+               {/* CTA CARD */}
+               <div className="bg-black rounded-3xl p-8 text-white relative overflow-hidden group shadow-2xl">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-600/20 rounded-full blur-3xl -mr-16 -mt-16 transition-transform group-hover:scale-150"></div>
+                  <h4 className="text-lg font-black uppercase leading-tight mb-4 relative z-10">Gabung Gerakan Rakyat</h4>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-6 relative z-10">Suarakan aspirasi bersama rakyat Banyumas.</p>
+                  <Link href="/pendaftaran" className="inline-block bg-orange-600 text-white px-8 py-3 rounded-full text-[10px] font-black uppercase hover:bg-white hover:text-black transition-all relative z-10 shadow-lg shadow-orange-600/20">
                     Daftar Anggota
                   </Link>
                </div>

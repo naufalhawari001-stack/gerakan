@@ -10,7 +10,7 @@ interface NewsSectionProps {
 
 export default function NewsSection({ news }: NewsSectionProps) {
   /**
-   * 1. HELPER: LOGIC THUMBNAIL YOUTUBE & INSTAGRAM
+   * 1. HELPER: LOGIC THUMBNAIL
    */
   const getYouTubeThumbnail = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -27,23 +27,30 @@ export default function NewsSection({ news }: NewsSectionProps) {
 
   if (!news || news.length === 0) return null;
 
-  // 2. FILTER LOGIC: Hanya kategori "Berita" & bukan "Video"
+  /**
+   * 2. FILTER LOGIC: 
+   * - Mencari yang mengandung kata "berita" (lebih fleksibel)
+   * - Mengeluarkan yang mengandung kata "video"
+   */
   const newsEntries = news
     .filter((item) => {
       const categoryName = item.category?.toLowerCase() || "";
-      return categoryName === "berita" && categoryName !== "video";
+      const isBerita = categoryName.includes("berita");
+      const isNotVideo = !categoryName.includes("video");
+      return isBerita && isNotVideo;
     })
-    .slice(0, 8); // Tampilkan 8 berita (2 baris x 4 kolom)
+    .slice(0, 8); // LIMIT 8 CARD
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "Baru saja";
     const date = new Date(dateString);
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
 
-    if (diffInHours < 24 && diffInHours > 0) return `${diffInHours} jam lalu`;
-    if (diffInHours === 0) return "Baru saja";
+    if (diffInMinutes < 60) return `${diffInMinutes} menit lalu`;
+    if (diffInHours < 24) return `${diffInHours} jam lalu`;
     
     return date.toLocaleDateString("id-ID", {
       day: "numeric",
@@ -56,8 +63,8 @@ export default function NewsSection({ news }: NewsSectionProps) {
     <section className="py-20 bg-white">
       <div className="max-w-[1440px] mx-auto px-4 md:px-8">
         
-        {/* HEADER SECTION - Lebih Minimalis */}
-        <div className="flex items-center justify-between mb-12">
+        {/* HEADER SECTION */}
+        <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-8 bg-[#FF4500] rounded-full"></div>
             <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tighter">Berita Terbaru</h2>
@@ -67,7 +74,7 @@ export default function NewsSection({ news }: NewsSectionProps) {
           </Link>
         </div>
 
-        {/* GRID BERITA - 4 KOLOM (SESUAI IMAGE_4D8B5C) */}
+        {/* GRID BERITA - 4 KOLOM */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
           {newsEntries.map((item) => {
             const thumbnailSrc = item.mainImage || 
@@ -77,25 +84,25 @@ export default function NewsSection({ news }: NewsSectionProps) {
 
             return (
               <article key={item._id} className="group flex flex-col">
-                {/* IMAGE CONTAINER - Aspect Ratio 16:9 agar rapi */}
-                <Link href={`/berita/${item.slug}`} className="relative aspect-video w-full overflow-hidden rounded-2xl mb-4 bg-gray-100 shadow-sm">
+                {/* IMAGE CONTAINER - 16:9 */}
+                <Link href={`/berita/${item.slug}`} className="relative aspect-video w-full overflow-hidden rounded-xl mb-3 bg-gray-100 shadow-sm border border-gray-50">
                   <Image
                     src={thumbnailSrc}
                     alt={item.title}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  {/* Category Tag Overlay (Kecil & Rapih) */}
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-black/60 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-md">
+                  {/* Category Tag (Kecil) */}
+                  <div className="absolute top-2.5 left-2.5">
+                    <span className="bg-black/60 backdrop-blur-md text-white text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-md">
                       {item.category}
                     </span>
                   </div>
                 </Link>
 
-                {/* CONTENT - Tipografi ala Portal Berita */}
+                {/* CONTENT */}
                 <div className="flex flex-col flex-1">
-                  <h3 className="text-base font-bold text-gray-900 leading-snug tracking-tight group-hover:text-[#FF4500] transition-colors line-clamp-2 mb-2">
+                  <h3 className="text-[15px] font-bold text-gray-900 leading-snug tracking-tight group-hover:text-[#FF4500] transition-colors line-clamp-2 mb-1.5">
                     <Link href={`/berita/${item.slug}`}>
                       {item.title}
                     </Link>
