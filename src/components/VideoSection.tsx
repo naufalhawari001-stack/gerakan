@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { PlayCircle, Instagram, ArrowRight, Video } from "lucide-react";
@@ -7,6 +9,9 @@ interface VideoSectionProps {
 }
 
 export default function VideoSection({ videos }: VideoSectionProps) {
+  /**
+   * 1. HELPER: LOGIC THUMBNAIL
+   */
   const getYouTubeThumbnail = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url?.match(regExp);
@@ -22,91 +27,88 @@ export default function VideoSection({ videos }: VideoSectionProps) {
 
   if (!videos || videos.length === 0) return null;
 
+  // 2. LIMIT LOGIC: Maksimal 4 Card
+  const displayVideos = videos.slice(0, 4);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "Baru saja";
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
-    <section className="py-24 bg-gray-50/50">
+    <section className="py-20 bg-gray-50/50">
       <div className="max-w-[1440px] mx-auto px-4 md:px-8">
         
-        {/* HEADER SECTION */}
-        <div className="flex items-end justify-between mb-12">
-          <div className="flex items-center gap-4">
-            <div className="w-2 h-10 bg-[#FFB400] rounded-full"></div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-600 mb-1">Multimedia</p>
-              <h2 className="text-3xl md:text-5xl font-black text-gray-900 uppercase tracking-tighter">Galeri Video</h2>
-            </div>
+        {/* HEADER SECTION - Seirama dengan NewsSection */}
+        <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-8 bg-[#FFB400] rounded-full"></div>
+            <h2 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tighter">Galeri Video</h2>
           </div>
-          <Link href="/berita" className="hidden md:flex items-center gap-3 text-[10px] font-black uppercase tracking-widest hover:text-orange-600 transition-colors">
-            Lihat Semua <ArrowRight size={16} />
+          <Link href="/berita" className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-[#FFB400] transition-colors">
+            Lihat Semua Video <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
-        {/* VIDEO GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {videos.map((video) => {
-            const thumbnail = video.mainImage || 
-                              getYouTubeThumbnail(video.youtubeUrl) || 
-                              getInstagramThumbnail(video.instagramUrl) || 
-                              "/placeholder.jpg";
+        {/* VIDEO GRID - 4 KOLOM */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
+          {displayVideos.map((video) => {
+            const thumbnailSrc = video.mainImage || 
+                                 getYouTubeThumbnail(video.youtubeUrl) || 
+                                 getInstagramThumbnail(video.instagramUrl) || 
+                                 "/placeholder-news.jpg";
             
             const isInstagram = video.instagramUrl && !video.youtubeUrl;
 
             return (
-              <Link 
-                key={video._id}
-                href={`/berita/${video.slug}`}
-                className="group relative bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500"
-              >
-                {/* THUMBNAIL WRAPPER */}
-                <div className="relative h-[400px] w-full overflow-hidden">
-                  <Image 
-                    src={thumbnail}
+              <article key={video._id} className="group flex flex-col">
+                {/* IMAGE CONTAINER - Dengan Overlay Play Icon */}
+                <Link href={`/berita/${video.slug}`} className="relative aspect-video w-full overflow-hidden rounded-2xl mb-4 bg-black shadow-sm border border-gray-100">
+                  <Image
+                    src={thumbnailSrc}
                     alt={video.title}
                     fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="object-cover opacity-80 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
                   />
                   
-                  {/* OVERLAY GRADIENT */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
-
-                  {/* PLAY ICON */}
+                  {/* PLAY ICON OVERLAY - Selalu Muncul (Ciri Khas Video) */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-white/20 backdrop-blur-md p-4 rounded-full scale-90 group-hover:scale-100 transition-transform duration-500 border border-white/30">
+                    <div className="bg-white/20 backdrop-blur-md p-3 rounded-full border border-white/30 shadow-2xl transition-transform duration-500 group-hover:scale-110">
                       {isInstagram ? (
-                        <Instagram size={40} className="text-white" />
+                        <Instagram size={24} className="text-white" />
                       ) : (
-                        <PlayCircle size={40} className="text-white" />
+                        <PlayCircle size={24} className="text-white" />
                       )}
                     </div>
                   </div>
 
-                  {/* CATEGORY TAG */}
-                  <div className="absolute top-6 left-6">
-                    <span className="bg-orange-600 text-white text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full shadow-lg">
+                  <div className="absolute top-3 left-3">
+                    <span className="bg-[#FFB400] text-black text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-md shadow-lg">
                       {video.category || "Video"}
                     </span>
                   </div>
+                </Link>
 
-                  {/* INFO TEXT AT BOTTOM */}
-                  <div className="absolute bottom-8 left-8 right-8">
-                    <h3 className="text-xl font-bold text-white leading-tight mb-3 line-clamp-2 group-hover:text-orange-400 transition-colors">
+                {/* CONTENT */}
+                <div className="flex flex-col flex-1">
+                  <h3 className="text-base font-bold text-gray-900 leading-snug tracking-tight group-hover:text-orange-500 transition-colors line-clamp-2 mb-2">
+                    <Link href={`/berita/${video.slug}`}>
                       {video.title}
-                    </h3>
-                    <div className="flex items-center gap-3 text-[9px] font-bold text-gray-300 uppercase tracking-widest">
-                       <Video size={12} className="text-orange-500" />
-                       <span>{new Date(video.publishedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
-                    </div>
+                    </Link>
+                  </h3>
+                  
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-gray-400 mt-auto uppercase tracking-widest">
+                    <Video size={12} className="text-[#FFB400]" />
+                    <span>{formatDate(video.publishedAt)}</span>
                   </div>
                 </div>
-              </Link>
+              </article>
             );
           })}
-        </div>
-
-        {/* MOBILE SHOW ALL BUTTON */}
-        <div className="mt-10 md:hidden">
-            <Link href="/berita" className="flex items-center justify-center gap-3 w-full py-5 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em]">
-                Semua Video <ArrowRight size={14} />
-            </Link>
         </div>
       </div>
     </section>
