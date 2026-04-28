@@ -17,31 +17,35 @@ export const settingsQuery = groq`
 
 /**
  * 2. QUERY DAFTAR BERITA
- * PERBAIKAN: Mengambil title kategori dan nama penulis menggunakan "->"
+ * PERBAIKAN: 
+ * - Menambahkan filter !(_id in path("drafts.**")) agar berita yang muncul hanya yang sudah di-Publish.
+ * - Menambahkan excerpt & authorImage agar tampilan list lebih lengkap.
  */
 export const newsQuery = groq`
-  *[_type == "news"] | order(publishedAt desc) {
+  *[_type == "news" && !(_id in path("drafts.**"))] | order(publishedAt desc) {
     _id,
     title,
     "slug": slug.current,
     "category": category->title,
     "author": author->name,
+    "authorImage": author->image.asset->url,
     "mainImage": mainImage.asset->url,
+    "excerpt": array::join(string::split((pt::text(body)), "")[0..150], "") + "...",
     publishedAt
   }
 `;
 
 /**
  * 3. QUERY DETAIL BERITA BERDASARKAN SLUG
- * PERBAIKAN: Dereference category & author agar body tidak error
  */
 export const singleNewsQuery = groq`
-  *[_type == "news" && slug.current == $slug][0] {
+  *[_type == "news" && slug.current == $slug && !(_id in path("drafts.**"))][0] {
     _id,
     title,
     "slug": slug.current,
     "category": category->title,
     "author": author->name,
+    "authorImage": author->image.asset->url,
     "mainImage": mainImage.asset->url,
     publishedAt,
     body 
@@ -52,7 +56,7 @@ export const singleNewsQuery = groq`
  * 4. QUERY ARRAY SLUG BERITA
  */
 export const newsSlugsQuery = groq`
-  *[_type == "news" && defined(slug.current)][].slug.current
+  *[_type == "news" && defined(slug.current) && !(_id in path("drafts.**"))][].slug.current
 `;
 
 /**
