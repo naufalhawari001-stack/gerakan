@@ -6,27 +6,34 @@ import HeaderDetail from "./HeaderDetail";
 
 export default function DynamicHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Set mounted true supaya React tahu kita sudah di client-side
+    setMounted(true);
+
     const handleScroll = () => {
-      // Jika scroll lebih dari 100px, ganti ke HeaderDetail
-      if (window.scrollY > 100) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 120);
     };
+
+    // Cek posisi awal saat pertama kali mount (antisipasi refresh di tengah halaman)
+    handleScroll();
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // PERBAIKAN KRUSIAL: 
+  // Sebelum mounted, kita kembalikan Navbar default (sama dengan yang dirender server)
+  // Ini akan menghilangkan error Hydration Mismatch.
+  if (!mounted) {
+    return <Navbar />;
+  }
+
   return (
     <>
-      {/* Gunakan transisi halus saat pergantian.
-        HeaderDetail muncul saat scroll, Navbar muncul saat di atas (Hero).
-      */}
-      <div className={`transition-all duration-500 fixed top-0 left-0 w-full z-[100] ${
+      {/* HEADER STICKY (Muncul saat scroll) */}
+      <div className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 transform ${
         isScrolled 
         ? "translate-y-0 opacity-100 visible" 
         : "-translate-y-full opacity-0 invisible"
@@ -34,11 +41,8 @@ export default function DynamicHeader() {
         <HeaderDetail isHomePage={true} />
       </div>
 
-      <div className={`transition-all duration-500 ${
-        isScrolled 
-        ? "opacity-0 invisible" 
-        : "opacity-100 visible"
-      }`}>
+      {/* NAVBAR HERO (Hanya muncul saat di atas) */}
+      <div className={`transition-opacity duration-500 ${isScrolled ? "opacity-0 invisible" : "opacity-100 visible"}`}>
         <Navbar />
       </div>
     </>

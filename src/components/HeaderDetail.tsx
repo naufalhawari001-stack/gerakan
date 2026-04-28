@@ -16,7 +16,7 @@ export default function HeaderDetail({ isHomePage = false }: HeaderDetailProps) 
     <header className="w-full bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-md">
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 h-20 md:h-24 flex items-center justify-between font-sans">
         
-        {/* LOGO SECTION */}
+        {/* 1. LOGO SECTION */}
         <Link href="/" className="flex flex-col items-start transition-transform hover:scale-105 duration-300 group">
           <div className="relative h-10 md:h-12 w-40 md:w-56">
             <Image 
@@ -32,10 +32,11 @@ export default function HeaderDetail({ isHomePage = false }: HeaderDetailProps) 
           </span>
         </Link>
 
-        {/* NAVIGATION MENU */}
+        {/* 2. NAVIGATION MENU */}
         <nav className="hidden lg:flex items-center gap-10 text-[12px] font-black uppercase tracking-[0.15em] text-gray-900">
           <Link href="/" className="hover:text-orange-600 transition-colors">Beranda</Link>
           
+          {/* DROPDOWN TENTANG GERAKAN */}
           <div 
             className="relative h-full flex items-center py-4"
             onMouseEnter={() => setIsAboutOpen(true)}
@@ -58,10 +59,14 @@ export default function HeaderDetail({ isHomePage = false }: HeaderDetailProps) 
           </div>
 
           <Link href="/berita" className={`transition-all ${!isHomePage ? "text-orange-600 underline underline-offset-8 decoration-2" : "hover:text-orange-600"}`}>Berita</Link>
+          
+          {/* MENU PENDAFTARAN - BARU */}
+          <Link href="/pendaftaran" className="hover:text-orange-600 transition-colors">Pendaftaran</Link>
+          
           <Link href="/kontak" className="hover:text-orange-600 transition-colors">Kontak</Link>
         </nav>
 
-        {/* DONASI BUTTON */}
+        {/* 3. DONASI BUTTON */}
         <Link href="/donasi" className="bg-orange-600 text-white px-10 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-gray-900 transition-all duration-300">
           Donasi
         </Link>
