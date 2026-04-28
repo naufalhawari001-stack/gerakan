@@ -44,10 +44,10 @@ export default function Footer({ settings }: FooterProps) {
           <div className="lg:col-span-5 flex flex-col items-start">
             <div className="mb-12">
               <Image 
-                src={settings?.footerLogo || "/gr-putih.png"} 
+                src={settings?.footerLogo || "/macan.png"} 
                 alt="Gerakan Rakyat" 
-                width={400} 
-                height={120}
+                width={450} 
+                height={170}
                 className="h-20 md:h-24 w-auto object-contain transition-transform hover:scale-105 duration-500"
                 priority
               />

@@ -1,4 +1,4 @@
-import { groq } from "next-sanity"; // Pastikan import groq ada di sini
+import { groq } from "next-sanity";
 import { client } from "./sanity.client";
 import { 
   settingsQuery, 
@@ -50,7 +50,7 @@ export async function getNewsBySlug(slug: string) {
 
 /**
  * 3. MENGAMBIL BERITA TERKAIT
- * Mencari berita dengan kategori yang sama, tapi mengecualikan berita yang sedang dibuka.
+ * Mencari berita dengan kategori yang sama, mengecualikan berita aktif.
  */
 export async function getRelatedNews(categoryId: string, currentId: string) {
   if (!categoryId || !currentId) return [];
@@ -75,7 +75,27 @@ export async function getRelatedNews(categoryId: string, currentId: string) {
 }
 
 /**
- * 4. MENGAMBIL SEMUA SLUG BERITA
+ * 4. MENGAMBIL DAFTAR BERITA TERBARU (SIDEBAR POPULER)
+ * Mengambil 5 berita terbaru secara dinamis.
+ */
+export async function getLatestNews(limit = 5) {
+  const query = groq`
+    *[_type == "news" && !(_id in path("drafts.**"))] | order(publishedAt desc)[0...${limit}] {
+      _id,
+      title,
+      "slug": slug.current
+    }
+  `;
+  return client.fetch(
+    query, 
+    {}, 
+    { next: { revalidate: 3600, tags: ["news"] } } 
+  );
+}
+
+/**
+ * 5. MENGAMBIL SEMUA SLUG BERITA
+ * Digunakan untuk generateStaticParams (SEO & Build Speed)
  */
 export async function getAllNewsSlugs(): Promise<string[]> {
   const slugs = await client.fetch(
