@@ -17,7 +17,6 @@ export const settingsQuery = groq`
 
 /**
  * 2. QUERY DAFTAR BERITA
- * Ditambahkan field 'youtubeUrl' untuk mendukung fitur auto-thumbnail di NewsList.
  */
 export const newsQuery = groq`
   *[_type == "news" && !(_id in path("drafts.**"))] | order(publishedAt desc) {
@@ -36,7 +35,7 @@ export const newsQuery = groq`
 
 /**
  * 3. QUERY DETAIL BERITA BERDASARKAN SLUG
- * Ditambahkan 'youtubeUrl' agar halaman detail bisa melakukan fallback thumbnail & SEO metadata.
+ * FIX: Menambahkan "categoryRef": category._ref agar fitur Related Post bisa jalan!
  */
 export const singleNewsQuery = groq`
   *[_type == "news" && slug.current == $slug && !(_id in path("drafts.**"))][0] {
@@ -44,6 +43,7 @@ export const singleNewsQuery = groq`
     title,
     "slug": slug.current,
     "category": category->title,
+    "categoryRef": category._ref, 
     "author": author->name,
     "authorImage": author->image.asset->url,
     "mainImage": mainImage.asset->url,
