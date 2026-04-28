@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { User, ChevronRight, Clock, Calendar } from "lucide-react";
+import { User, ChevronRight, Clock, Calendar, PlayCircle } from "lucide-react";
 import { PortableText } from "@portabletext/react";
 import { getNewsBySlug, getAllNewsSlugs } from "@/lib/sanity.fetch";
 import Footer from "@/components/Footer";
@@ -9,16 +9,61 @@ import HeaderDetail from "@/components/HeaderDetail";
 import ShareAction from "@/components/ShareAction";
 import { Metadata } from "next";
 
+/**
+ * 1. HELPER: EKSTRAK ID YOUTUBE & THUMBNAIL
+ */
+const getYouTubeId = (url: string) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url?.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
+const getYouTubeThumbnail = (url: string) => {
+  const id = getYouTubeId(url);
+  return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : "/placeholder.jpg";
+};
+
+/**
+ * 2. CUSTOM PORTABLE TEXT COMPONENTS
+ * Menambahkan render khusus untuk block 'youtube'
+ */
+const portableTextComponents = {
+  types: {
+    youtube: ({ value }: any) => {
+      const id = getYouTubeId(value.url);
+      if (!id) return null;
+      return (
+        <div className="my-12 relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+          <iframe
+            src={`https://www.youtube.com/embed/${id}`}
+            title="YouTube video player"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="absolute top-0 left-0 w-full h-full"
+          />
+        </div>
+      );
+    },
+  },
+  block: {
+    normal: ({ children }: any) => <p className="text-lg md:text-xl mb-8 leading-relaxed text-gray-700">{children}</p>,
+    h2: ({ children }: any) => <h2 className="text-2xl md:text-3xl font-bold text-gray-700 mt-14 mb-6 uppercase italic tracking-tight">{children}</h2>,
+  },
+};
+
 // Logic SEO
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const news = await getNewsBySlug(slug);
   if (!news) return { title: "Berita Tidak Ditemukan" };
-  const title = `${news.title} | Gerakan Rakyat BMS`;
+  
+  // SEO Thumbnail: Prioritas Main Image, jika tidak ada pakai YouTube Thumbnail
+  const ogImage = news.mainImage || getYouTubeThumbnail(news.youtubeUrl);
+
   return {
-    title,
+    title: `${news.title} | Gerakan Rakyat BMS`,
     description: news.excerpt || "Berita terbaru Gerakan Rakyat BMS",
-    openGraph: { title, images: [{ url: news.mainImage || "/og-image.jpg" }] },
+    openGraph: { title: news.title, images: [{ url: ogImage }] },
   };
 }
 
@@ -27,14 +72,6 @@ const calculateReadingTime = (body: any[]) => {
   const text = body?.map(b => b.children?.map((c:any) => c.text).join("")).join(" ") || "";
   const words = text.split(/\s+/).length;
   return Math.ceil(words / 200) || 1;
-};
-
-const portableTextComponents = {
-  block: {
-    // Sesuai image_a0c2e3.png, kita gunakan leading-relaxed dan warna yang tidak terlalu hitam
-    normal: ({ children }: any) => <p className="text-lg md:text-xl mb-8 leading-relaxed text-gray-700">{children}</p>,
-    h2: ({ children }: any) => <h2 className="text-2xl md:text-3xl font-bold text-gray-700 mt-14 mb-6 uppercase italic tracking-tight">{children}</h2>,
-  },
 };
 
 export async function generateStaticParams() {
@@ -50,6 +87,9 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
 
   const readingTime = calculateReadingTime(news.body);
   const currentUrl = `https://gerakanrakyatbms.com/berita/${slug}`;
+  
+  // LOGIC AUTO THUMBNAIL: Jika mainImage kosong, ambil dari YouTube
+  const finalThumbnail = news.mainImage || getYouTubeThumbnail(news.youtubeUrl);
 
   return (
     <main className="bg-white min-h-screen relative font-sans">
@@ -70,15 +110,13 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 {news.title}
               </h1>
 
-              {/* META INFO */}
               <div className="flex flex-col md:flex-row md:items-center justify-between border-y border-gray-100 py-8 mb-12 gap-6">
                 <div className="flex items-center gap-5">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden border border-gray-100 shadow-sm bg-gray-50 flex-shrink-0">
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50"><User size={32} /></div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 bg-orange-50"><User size={32} /></div>
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Penulis</p>
-                    {/* Diubah ke gray-700 agar tidak terlalu hitam pekat */}
                     <p className="text-base font-bold text-gray-700 uppercase tracking-tight">{news.author || "Admin"}</p>
                   </div>
                 </div>
@@ -94,18 +132,32 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                   </div>
                 </div>
 
-                {/* Share Action sekarang menggunakan bg-gray-800 (lebih soft) */}
                 <ShareAction title={news.title} url={currentUrl} />
               </div>
 
-              {/* GAMBAR UTAMA */}
-              <figure className="mb-16">
-                <div className="relative h-[300px] md:h-[600px] w-full overflow-hidden rounded-3xl shadow-2xl border-8 border-white">
-                  <Image src={news.mainImage || "/placeholder.jpg"} alt={news.title} fill className="object-cover" priority />
+              {/* GAMBAR UTAMA (AUTO-FALLBACK KE YOUTUBE THUMBNAIL) */}
+              <figure className="mb-16 group relative">
+                <div className="relative h-[300px] md:h-[600px] w-full overflow-hidden rounded-3xl shadow-2xl border-8 border-white bg-gray-100">
+                  <Image 
+                    src={finalThumbnail} 
+                    alt={news.title} 
+                    fill 
+                    className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                    priority 
+                  />
+                  {/* Icon Overlay jika ini thumbnail video */}
+                  {!news.mainImage && news.youtubeUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-all">
+                        <PlayCircle size={80} className="text-white opacity-80 drop-shadow-2xl" />
+                    </div>
+                  )}
                 </div>
-                <figcaption className="text-[11px] font-medium text-gray-400 mt-6 text-center uppercase tracking-widest italic">Foto: Dok. Gerakan Rakyat • {news.title}</figcaption>
+                <figcaption className="text-[11px] font-medium text-gray-400 mt-6 text-center uppercase tracking-widest italic">
+                   {news.mainImage ? "Foto: Dok. Gerakan Rakyat" : "Video: YouTube Gerakan Rakyat"} • {news.title}
+                </figcaption>
               </figure>
 
+              {/* ISI BERITA DENGAN SUPPORT EMBED YOUTUBE */}
               <article className="prose prose-xl max-w-none first-letter:text-8xl first-letter:font-black first-letter:text-orange-600 first-letter:mr-4 first-letter:float-left first-letter:leading-[0.85]">
                 <PortableText value={news.body} components={portableTextComponents} />
               </article>

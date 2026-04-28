@@ -1,4 +1,5 @@
 import { defineType, defineField } from 'sanity';
+import { PlayCircle } from 'lucide-react'; // Icon untuk pemanis di Sanity Studio
 
 export default defineType({
   name: 'news',
@@ -9,7 +10,7 @@ export default defineType({
       name: 'title',
       title: 'Judul Berita',
       type: 'string',
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'slug',
@@ -19,23 +20,21 @@ export default defineType({
         source: 'title',
         maxLength: 96,
       },
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule) => Rule.required(),
     }),
-    // PERBAIKAN: Menggunakan referensi ke skema category
     defineField({
       name: 'category',
       title: 'Kategori',
       type: 'reference',
       to: [{ type: 'category' }],
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule) => Rule.required(),
     }),
-    // TAMBAHAN: Referensi ke skema author (Penulis)
     defineField({
       name: 'author',
       title: 'Penulis',
       type: 'reference',
       to: [{ type: 'author' }],
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'mainImage',
@@ -44,14 +43,30 @@ export default defineType({
       options: {
         hotspot: true,
       },
-      validation: (Rule: any) => Rule.required(),
+      // MENAMBAHKAN ALT TEXT UNTUK SEO GAMBAR
+      fields: [
+        {
+          name: 'alt',
+          type: 'string',
+          title: 'Teks Alternatif (SEO)',
+          description: 'Penting untuk aksesibilitas dan mesin pencari (Google Image).',
+          validation: (Rule) => Rule.required(),
+        }
+      ],
+    }),
+    // FITUR BARU: YOUTUBE URL UNTUK THUMBNAIL OTOMATIS
+    defineField({
+      name: 'youtubeUrl',
+      title: 'Link Video YouTube (Thumbnail)',
+      type: 'url',
+      description: 'Jika Gambar Utama dikosongkan, website akan otomatis mengambil thumbnail dari link ini.',
     }),
     defineField({
       name: 'publishedAt',
       title: 'Tanggal Publikasi',
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'excerpt',
@@ -59,7 +74,7 @@ export default defineType({
       type: 'text',
       rows: 3,
       description: 'Muncul di halaman depan daftar berita.',
-      validation: (Rule: any) => Rule.max(200),
+      validation: (Rule) => Rule.max(200),
     }),
     defineField({
       name: 'body',
@@ -74,12 +89,28 @@ export default defineType({
             {
               name: 'alt',
               type: 'string',
-              title: 'Alternative Text',
+              title: 'Teks Alternatif',
+              validation: (Rule) => Rule.required(),
             }
           ]
+        },
+        // FITUR BARU: EMBED YOUTUBE DI DALAM KONTEN
+        {
+          type: 'object',
+          name: 'youtube',
+          title: 'Embed Video YouTube',
+          icon: PlayCircle,
+          fields: [
+            {
+              name: 'url',
+              type: 'url',
+              title: 'Link Video YouTube',
+              validation: (Rule) => Rule.required(),
+            }
+          ],
         }
       ],
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule) => Rule.required(),
     }),
   ],
   preview: {
@@ -87,10 +118,14 @@ export default defineType({
       title: 'title',
       author: 'author.name',
       media: 'mainImage',
+      youtube: 'youtubeUrl'
     },
     prepare(selection) {
-      const { author } = selection;
-      return { ...selection, subtitle: author ? `Oleh: ${author}` : '' };
+      const { author, youtube } = selection;
+      return { 
+        ...selection, 
+        subtitle: author ? `Oleh: ${author} ${youtube ? '(Video)' : ''}` : '' 
+      };
     },
   },
 });

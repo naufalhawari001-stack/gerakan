@@ -17,9 +17,7 @@ export const settingsQuery = groq`
 
 /**
  * 2. QUERY DAFTAR BERITA
- * PERBAIKAN: 
- * - Menambahkan filter !(_id in path("drafts.**")) agar berita yang muncul hanya yang sudah di-Publish.
- * - Menambahkan excerpt & authorImage agar tampilan list lebih lengkap.
+ * Ditambahkan field 'youtubeUrl' untuk mendukung fitur auto-thumbnail di NewsList.
  */
 export const newsQuery = groq`
   *[_type == "news" && !(_id in path("drafts.**"))] | order(publishedAt desc) {
@@ -30,6 +28,7 @@ export const newsQuery = groq`
     "author": author->name,
     "authorImage": author->image.asset->url,
     "mainImage": mainImage.asset->url,
+    "youtubeUrl": youtubeUrl,
     "excerpt": array::join(string::split((pt::text(body)), "")[0..150], "") + "...",
     publishedAt
   }
@@ -37,6 +36,7 @@ export const newsQuery = groq`
 
 /**
  * 3. QUERY DETAIL BERITA BERDASARKAN SLUG
+ * Ditambahkan 'youtubeUrl' agar halaman detail bisa melakukan fallback thumbnail & SEO metadata.
  */
 export const singleNewsQuery = groq`
   *[_type == "news" && slug.current == $slug && !(_id in path("drafts.**"))][0] {
@@ -47,6 +47,7 @@ export const singleNewsQuery = groq`
     "author": author->name,
     "authorImage": author->image.asset->url,
     "mainImage": mainImage.asset->url,
+    "youtubeUrl": youtubeUrl,
     publishedAt,
     body 
   }
