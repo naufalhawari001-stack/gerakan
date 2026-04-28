@@ -1,5 +1,5 @@
 import { defineType, defineField } from 'sanity';
-import { PlayCircle } from 'lucide-react'; // Icon untuk pemanis di Sanity Studio
+import { PlayCircle, Instagram } from 'lucide-react';
 
 export default defineType({
   name: 'news',
@@ -40,27 +40,34 @@ export default defineType({
       name: 'mainImage',
       title: 'Gambar Utama',
       type: 'image',
-      options: {
-        hotspot: true,
-      },
-      // MENAMBAHKAN ALT TEXT UNTUK SEO GAMBAR
+      options: { hotspot: true },
       fields: [
         {
           name: 'alt',
           type: 'string',
           title: 'Teks Alternatif (SEO)',
-          description: 'Penting untuk aksesibilitas dan mesin pencari (Google Image).',
+          description: 'Penting untuk aksesibilitas dan Google Image.',
           validation: (Rule) => Rule.required(),
         }
       ],
     }),
-    // FITUR BARU: YOUTUBE URL UNTUK THUMBNAIL OTOMATIS
+    
+    // FIELD UNTUK THUMBNAIL OTOMATIS (YOUTUBE)
     defineField({
       name: 'youtubeUrl',
       title: 'Link Video YouTube (Thumbnail)',
       type: 'url',
-      description: 'Jika Gambar Utama dikosongkan, website akan otomatis mengambil thumbnail dari link ini.',
+      description: 'Gunakan jika ingin auto-thumbnail dari YouTube (jika Gambar Utama kosong).',
     }),
+
+    // FIELD UNTUK THUMBNAIL OTOMATIS (INSTAGRAM) - BARU!
+    defineField({
+      name: 'instagramUrl',
+      title: 'Link Post/Reels Instagram (Thumbnail)',
+      type: 'url',
+      description: 'Gunakan jika ingin auto-thumbnail dari Instagram (jika Gambar Utama kosong).',
+    }),
+
     defineField({
       name: 'publishedAt',
       title: 'Tanggal Publikasi',
@@ -73,7 +80,6 @@ export default defineType({
       title: 'Ringkasan (Snippet)',
       type: 'text',
       rows: 3,
-      description: 'Muncul di halaman depan daftar berita.',
       validation: (Rule) => Rule.max(200),
     }),
     defineField({
@@ -85,28 +91,26 @@ export default defineType({
         { 
           type: 'image',
           options: { hotspot: true },
-          fields: [
-            {
-              name: 'alt',
-              type: 'string',
-              title: 'Teks Alternatif',
-              validation: (Rule) => Rule.required(),
-            }
-          ]
+          fields: [{ name: 'alt', type: 'string', title: 'Teks Alternatif' }]
         },
-        // FITUR BARU: EMBED YOUTUBE DI DALAM KONTEN
+        // EMBED YOUTUBE DI DALAM ARTIKEL
         {
           type: 'object',
           name: 'youtube',
           title: 'Embed Video YouTube',
           icon: PlayCircle,
           fields: [
-            {
-              name: 'url',
-              type: 'url',
-              title: 'Link Video YouTube',
-              validation: (Rule) => Rule.required(),
-            }
+            { name: 'url', type: 'url', title: 'URL YouTube', validation: (Rule) => Rule.required() }
+          ],
+        },
+        // EMBED INSTAGRAM DI DALAM ARTIKEL
+        {
+          type: 'object',
+          name: 'instagram',
+          title: 'Embed Instagram',
+          icon: Instagram,
+          fields: [
+            { name: 'url', type: 'url', title: 'URL Instagram', validation: (Rule) => Rule.required() }
           ],
         }
       ],
@@ -118,13 +122,18 @@ export default defineType({
       title: 'title',
       author: 'author.name',
       media: 'mainImage',
-      youtube: 'youtubeUrl'
+      youtube: 'youtubeUrl',
+      instagram: 'instagramUrl'
     },
     prepare(selection) {
-      const { author, youtube } = selection;
+      const { author, youtube, instagram } = selection;
+      let typeLabel = '';
+      if (youtube) typeLabel = '(YT Video)';
+      if (instagram) typeLabel = '(IG Post)';
+      
       return { 
         ...selection, 
-        subtitle: author ? `Oleh: ${author} ${youtube ? '(Video)' : ''}` : '' 
+        subtitle: `${author ? `Oleh: ${author}` : 'Admin'} ${typeLabel}`
       };
     },
   },

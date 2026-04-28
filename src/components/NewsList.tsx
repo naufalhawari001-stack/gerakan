@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, Search, Filter, PlayCircle, ArrowRight } from "lucide-react";
+import { Calendar, Search, PlayCircle, ArrowRight, Instagram } from "lucide-react";
 
 interface NewsListProps {
   initialNews: any[];
@@ -14,16 +14,25 @@ export default function NewsList({ initialNews }: NewsListProps) {
   const [activeCategory, setActiveCategory] = useState("Semua");
 
   /**
-   * 1. HELPER: LOGIC THUMBNAIL YOUTUBE OTOMATIS
+   * 1. HELPER: LOGIC THUMBNAIL YOUTUBE
    */
   const getYouTubeThumbnail = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url?.match(regExp);
     const id = (match && match[2].length === 11) ? match[2] : null;
-    return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : "/placeholder-news.jpg";
+    return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : null;
   };
 
-  // Daftar kategori unik (Filter data null agar tidak error)
+  /**
+   * 2. HELPER: LOGIC THUMBNAIL INSTAGRAM (POST/REELS)
+   */
+  const getInstagramThumbnail = (url: string) => {
+    const match = url?.match(/(?:reels\/|p\/)([\w-]+)/);
+    const id = match ? match[1] : null;
+    return id ? `https://www.instagram.com/p/${id}/media/?size=l` : null;
+  };
+
+  // Daftar kategori unik
   const categories = ["Semua", ...new Set(initialNews.map((item) => item.category).filter(Boolean))];
 
   // Logika filter ganda
@@ -44,12 +53,8 @@ export default function NewsList({ initialNews }: NewsListProps) {
 
   return (
     <div className="max-w-[1440px] mx-auto pb-24">
-      {/* FILTER SECTION 
-          -mt-24 agar bar pencarian sedikit menumpuk di atas header hitam (efek depth)
-      */}
+      {/* FILTER SECTION */}
       <div className="flex flex-col lg:flex-row gap-6 mb-20 -mt-24 relative z-20">
-        
-        {/* 1. SEARCH BAR - Modern & Clean */}
         <div className="relative flex-1 group">
           <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
             <Search className="text-gray-400 group-focus-within:text-[#FF4500] transition-colors" size={20} />
@@ -62,7 +67,6 @@ export default function NewsList({ initialNews }: NewsListProps) {
           />
         </div>
 
-        {/* 2. CATEGORY CHIPS */}
         <div className="flex flex-wrap items-center gap-3">
           {categories.map((cat: any) => (
             <button
@@ -84,9 +88,14 @@ export default function NewsList({ initialNews }: NewsListProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {filteredNews.length > 0 ? (
           filteredNews.map((item) => {
-            // Priority: mainImage > YouTube Thumbnail > Placeholder
-            const thumbnailSrc = item.mainImage || getYouTubeThumbnail(item.youtubeUrl);
-            const isVideo = !item.mainImage && item.youtubeUrl;
+            // Priority: mainImage > YouTube > Instagram > Placeholder
+            const thumbnailSrc = item.mainImage || 
+                                 getYouTubeThumbnail(item.youtubeUrl) || 
+                                 getInstagramThumbnail(item.instagramUrl) || 
+                                 "/placeholder-news.jpg";
+            
+            const isVideo = !item.mainImage && (item.youtubeUrl || item.instagramUrl?.includes('/reels/'));
+            const isInstagram = !item.mainImage && item.instagramUrl && !item.instagramUrl.includes('/reels/');
 
             return (
               <article 
@@ -102,10 +111,17 @@ export default function NewsList({ initialNews }: NewsListProps) {
                     className="object-cover transition-transform duration-1000 group-hover:scale-110"
                   />
                   
-                  {/* Overlay Video */}
+                  {/* Overlay Play Icon (YouTube / Reels) */}
                   {isVideo && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition-all duration-500">
                       <PlayCircle size={64} className="text-white opacity-80 group-hover:scale-110 transition-transform" />
+                    </div>
+                  )}
+
+                  {/* Overlay Instagram Icon (Static Post) */}
+                  {isInstagram && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/5 group-hover:bg-black/20 transition-all duration-500">
+                      <Instagram size={64} className="text-white opacity-60 group-hover:scale-110 transition-transform" />
                     </div>
                   )}
 
@@ -123,7 +139,8 @@ export default function NewsList({ initialNews }: NewsListProps) {
                     {formatDate(item.publishedAt)}
                   </div>
                   
-                  <h3 className="text-xl md:text-2xl font-extrabold text-gray-800 leading-[1.3] group-hover:text-[#FF4500] transition-colors line-clamp-2 italic tracking-tight">
+                  {/* Judul: Hilangkan 'italic' agar tegas */}
+                  <h3 className="text-xl md:text-2xl font-extrabold text-gray-800 leading-[1.3] group-hover:text-[#FF4500] transition-colors line-clamp-2 tracking-tight">
                     <Link href={`/berita/${item.slug}`}>
                       {item.title}
                     </Link>
@@ -151,7 +168,7 @@ export default function NewsList({ initialNews }: NewsListProps) {
         ) : (
           <div className="col-span-full py-32 text-center bg-gray-50/50 rounded-[3rem] border-2 border-dashed border-gray-100">
             <Search size={48} className="mx-auto text-gray-200 mb-6" />
-            <p className="text-gray-400 text-lg font-bold italic uppercase tracking-widest">
+            <p className="text-gray-400 text-lg font-bold uppercase tracking-widest">
               Pencarian "{searchTerm}" tidak ditemukan.
             </p>
           </div>

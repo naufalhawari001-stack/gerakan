@@ -12,21 +12,30 @@ import FollowUs from "@/components/FollowUs";
 import { Metadata } from "next";
 
 /**
- * 1. HELPER: EKSTRAK ID YOUTUBE & THUMBNAIL
+ * 1. HELPER: EKSTRAK THUMBNAIL YOUTUBE
  */
 const getYouTubeId = (url: string) => {
-  const regExp = /^.*(youtu.be\/|v\/|u\/|w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url?.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
 const getYouTubeThumbnail = (url: string) => {
   const id = getYouTubeId(url);
-  return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : "/placeholder.jpg";
+  return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : null;
 };
 
 /**
- * 2. CUSTOM PORTABLE TEXT COMPONENTS
+ * 2. HELPER: EKSTRAK THUMBNAIL INSTAGRAM (POST/REELS)
+ */
+const getInstagramThumbnail = (url: string) => {
+  const match = url?.match(/(?:reels\/|p\/)([\w-]+)/);
+  const id = match ? match[1] : null;
+  return id ? `https://www.instagram.com/p/${id}/media/?size=l` : null;
+};
+
+/**
+ * 3. CUSTOM PORTABLE TEXT COMPONENTS
  */
 const portableTextComponents = {
   types: {
@@ -45,6 +54,22 @@ const portableTextComponents = {
         </div>
       );
     },
+    instagram: ({ value }: any) => {
+      const url = value.url;
+      if (!url) return null;
+      const embedUrl = url.endsWith('/') ? `${url}embed/` : `${url}/embed/`;
+      return (
+        <div className="my-10 flex justify-center w-full">
+          <iframe
+            src={embedUrl}
+            className="w-full max-w-[540px] min-h-[600px] aspect-[1/1.2] rounded-3xl border border-gray-100 shadow-xl"
+            frameBorder="0"
+            scrolling="no"
+            allowTransparency={true}
+          ></iframe>
+        </div>
+      );
+    },
   },
   block: {
     normal: ({ children }: any) => <p className="text-lg md:text-xl mb-6 leading-relaxed text-gray-700">{children}</p>,
@@ -58,7 +83,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const news = await getNewsBySlug(slug);
   if (!news) return { title: "Berita Tidak Ditemukan" };
   
-  const ogImage = news.mainImage || getYouTubeThumbnail(news.youtubeUrl);
+  const ogImage = news.mainImage || 
+                  getYouTubeThumbnail(news.youtubeUrl) || 
+                  getInstagramThumbnail(news.instagramUrl) || 
+                  "/placeholder.jpg";
 
   return {
     title: `${news.title} | Gerakan Rakyat BMS`,
@@ -91,13 +119,17 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
 
   const readingTime = calculateReadingTime(news.body);
   const currentUrl = `https://gerakanrakyatbms.com/berita/${slug}`;
-  const finalThumbnail = news.mainImage || getYouTubeThumbnail(news.youtubeUrl);
+  
+  // LOGIC AUTO THUMBNAIL: Prioritas Manual > YouTube > Instagram
+  const finalThumbnail = news.mainImage || 
+                         getYouTubeThumbnail(news.youtubeUrl) || 
+                         getInstagramThumbnail(news.instagramUrl) || 
+                         "/placeholder.jpg";
 
   return (
     <main className="bg-white min-h-screen relative font-sans">
       <HeaderDetail />
       
-      {/* TIGHT HEADER SPACE */}
       <div className="relative pt-12 md:pt-16 pb-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           
@@ -110,15 +142,12 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <div className="lg:col-span-8">
               
-              {/* JUDUL NON-ITALIC */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-[1.15] tracking-tight">
                 {news.title}
               </h1>
 
-              {/* META INFO: SHARE POSITIONED NEXT TO READ TIME ON MOBILE */}
               <div className="flex flex-col md:flex-row md:items-center justify-between border-y border-gray-100 py-6 mb-8 gap-6">
                 
-                {/* Author Info */}
                 <div className="flex items-center gap-5">
                   <div className="relative w-14 h-14 rounded-full overflow-hidden border border-gray-100 shadow-sm bg-orange-50 flex-shrink-0">
                     <div className="w-full h-full flex items-center justify-center text-gray-400"><User size={28} /></div>
@@ -129,7 +158,6 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                   </div>
                 </div>
 
-                {/* Wrapper untuk Date, Read Time, dan Share Button (Satu baris di mobile) */}
                 <div className="flex items-center justify-between md:justify-end gap-6 md:gap-12 w-full md:w-auto">
                   <div className="flex items-center gap-8 md:gap-12 text-sm font-semibold text-gray-600">
                     <div className="flex flex-col">
@@ -142,25 +170,23 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                     </div>
                   </div>
                   
-                  {/* Share button sekarang berada di samping info Baca pada mobile */}
                   <div className="flex-shrink-0">
                     <ShareAction title={news.title} url={currentUrl} />
                   </div>
                 </div>
-
               </div>
 
               <figure className="mb-10 group relative">
                 <div className="relative h-[300px] md:h-[550px] w-full overflow-hidden rounded-[2rem] shadow-2xl border-4 md:border-8 border-white bg-gray-100">
                   <Image src={finalThumbnail} alt={news.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" priority />
-                  {!news.mainImage && news.youtubeUrl && (
+                  {!news.mainImage && (news.youtubeUrl || news.instagramUrl) && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-all">
                         <PlayCircle size={70} className="text-white opacity-80 drop-shadow-2xl" />
                     </div>
                   )}
                 </div>
                 <figcaption className="text-[11px] font-medium text-gray-400 mt-4 text-center uppercase tracking-widest">
-                   {news.mainImage ? "Foto: Dok. Gerakan Rakyat" : "Video: YouTube Gerakan Rakyat"} • {news.title}
+                   {news.mainImage ? "Foto: Dok. Gerakan Rakyat" : "Media: Social Embed"} • {news.title}
                 </figcaption>
               </figure>
 
