@@ -63,6 +63,7 @@ export async function getRelatedNews(categoryId: string, currentId: string) {
       "category": category->title,
       "mainImage": mainImage.asset->url,
       "youtubeUrl": youtubeUrl,
+      "instagramUrl": instagramUrl,
       publishedAt
     }
   `;
@@ -76,7 +77,7 @@ export async function getRelatedNews(categoryId: string, currentId: string) {
 
 /**
  * 4. MENGAMBIL DAFTAR BERITA TERBARU (SIDEBAR POPULER)
- * FIX: Menambahkan "category" dan "publishedAt" ke dalam query.
+ * Mengambil berita terbaru lengkap dengan kategori dan tanggal.
  */
 export async function getLatestNews(limit = 5) {
   const query = groq`
@@ -97,7 +98,31 @@ export async function getLatestNews(limit = 5) {
 }
 
 /**
- * 5. MENGAMBIL SEMUA SLUG BERITA
+ * 5. MENGAMBIL BERITA KHUSUS VIDEO (Untuk Homepage Video Section)
+ * Mengambil berita yang memiliki link YouTube atau Instagram.
+ */
+export async function getVideoNews(limit = 3) {
+  const query = groq`
+    *[_type == "news" && (defined(youtubeUrl) || defined(instagramUrl)) && !(_id in path("drafts.**"))] | order(publishedAt desc)[0...${limit}] {
+      _id,
+      title,
+      "slug": slug.current,
+      "category": category->title,
+      "mainImage": mainImage.asset->url,
+      youtubeUrl,
+      instagramUrl,
+      publishedAt
+    }
+  `;
+  return client.fetch(
+    query, 
+    {}, 
+    { next: { revalidate: 30, tags: ["news"] } }
+  );
+}
+
+/**
+ * 6. MENGAMBIL SEMUA SLUG BERITA
  * Digunakan untuk generateStaticParams (SEO & Build Speed)
  */
 export async function getAllNewsSlugs(): Promise<string[]> {

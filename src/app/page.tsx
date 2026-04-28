@@ -2,15 +2,15 @@ import { Metadata } from "next";
 import DynamicHeader from "@/components/DynamicHeader";
 import Hero from "@/components/Hero";
 import NewsSection from "@/components/NewsSection";
+import VideoSection from "@/components/VideoSection"; // IMPORT BARU
 import AgendaSection from "@/components/AgendaSection";
 import DonationCTA from "@/components/DonationCTA";
 import QuoteSection from "@/components/QuoteSection";
 import Footer from "@/components/Footer";
-import { getHomePageData } from "@/lib/sanity.fetch";
+import { getHomePageData, getVideoNews } from "@/lib/sanity.fetch"; // IMPORT FETCHER BARU
 
 /**
  * METADATA: Optimasi SEO & Social Share
- * Memastikan link yang dibagikan ke WhatsApp/FB terlihat profesional.
  */
 export const metadata: Metadata = {
   title: "Gerakan Rakyat BMS | Wadah Perjuangan & Perubahan Banyumas",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     url: "https://gerakanrakyatbms.com",
     siteName: "Gerakan Rakyat BMS",
     images: [{ 
-      url: "/og-image.jpg", // Pastikan file ini ada di folder public
+      url: "/og-image.jpg",
       width: 1200, 
       height: 630,
       alt: "Pejuang Gerakan Rakyat Banyumas"
@@ -38,56 +38,46 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  // Mengambil data terpusat dengan revalidate 30-60 detik
-  const data = await getHomePageData(); 
+  // Ambil data secara paralel agar loading super cepat
+  const [data, videoData] = await Promise.all([
+    getHomePageData(),
+    getVideoNews(3) // Mengambil 3 video terbaru untuk section multimedia
+  ]);
 
   return (
     <>
-      {/* SMART NAVIGATION 
-        Otomatis menangani transisi transparan ke solid saat scroll.
-        Aman dari Hydration Error karena sudah dipagari state 'mounted'.
-      */}
+      {/* SMART NAVIGATION */}
       <DynamicHeader />
 
       <main className="relative bg-white overflow-hidden font-sans">
-        {/* HERO SECTION 
-          Menerima data headline & tagline dinamis dari Settings Sanity.
-        */}
+        {/* HERO SECTION */}
         <Hero 
           headline={data.settings?.heroHeadline} 
           tagline={data.settings?.heroTagline} 
         />
         
-        {/* NEWS SECTION 
-          Menampilkan list berita terbaru. 
-          Sudah mendukung fitur Auto-Thumbnail YouTube jika image utama kosong.
-        */}
+        {/* NEWS SECTION (LATEST ARTICLES) */}
         <section id="berita" className="relative z-10">
            <NewsSection news={data.news} />
         </section>
 
-        {/* AGENDA & REGISTRATION 
-          Fokus pada konversi anggota baru (Gabung KTA).
-        */}
+        {/* MULTIMEDIA SECTION (YOUTUBE & INSTAGRAM REELS) */}
+        <VideoSection videos={videoData} />
+
+        {/* AGENDA & REGISTRATION (KTA) */}
         <AgendaSection 
           title={data.agenda?.title}
           slogan={data.agenda?.slogan}
           link={data.agenda?.registrationLink}
         />
 
-        {/* DONATION / ACTION CTA 
-          Elemen interaktif untuk mengajak partisipasi aktif.
-        */}
+        {/* DONATION / ACTION CTA */}
         <DonationCTA />
 
-        {/* QUOTE TOKOH 
-          Membangun kepercayaan (Trust) melalui statement pimpinan.
-        */}
+        {/* QUOTE TOKOH */}
         <QuoteSection quoteData={data.quote} />
 
-        {/* FOOTER 
-          Berisi identitas resmi DPD Banyumas dan link Supported by Onislam.
-        */}
+        {/* FOOTER */}
         <Footer settings={data.settings} />
       </main>
     </>
