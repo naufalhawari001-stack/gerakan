@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
+import { Providers } from "@/components/Providers"; // IMPORT PROVIDER UNTUK LOGIN
 
 const montserrat = Montserrat({ 
   subsets: ["latin"], 
@@ -9,8 +10,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  // 1. Basic SEO & Title Template
-  // template: "%s | Gerakan Rakyat BMS" -> Otomatis menggabung judul berita + Brand
+  // 1. Basic SEO & Title Template (Mencegah Double Branding)
   title: {
     default: "Gerakan Rakyat BMS | Perubahan & Gotong Royong",
     template: "%s | Gerakan Rakyat BMS",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Aris Suharyanto" }],
   creator: "Aris Suharyanto",
   publisher: "Gerakan Rakyat BMS",
-  metadataBase: new URL("https://gerakanrakyatbms.com"), // Menghindari error path pada OG Image
+  metadataBase: new URL("https://gerakanrakyatbms.com"), // Base URL untuk social media preview
   
   // 2. Open Graph (Thumbnail WhatsApp, FB, Telegram)
   openGraph: {
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     description: "Gabung bersama kami di Gerakan Rakyat BMS. Suarakan perubahan untuk Banyumas yang lebih baik.",
     images: [
       {
-        url: "/og-image.jpg", // File ini harus ada di /public/og-image.jpg
+        url: "/og-image.jpg", 
         width: 1200,
         height: 630,
         alt: "Gerakan Rakyat BMS Banner",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
-    apple: "/apple-icon.png", // Icon untuk iPhone (jika ada)
+    apple: "/apple-icon.png",
   },
 
   // 5. Search Engine Verification
@@ -82,7 +82,10 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={`${montserrat.className} bg-white antialiased`}>
-        {children}
+        {/* BUNGKUS DENGAN PROVIDERS AGAR FITUR LOGIN/KOMENTAR JALAN */}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

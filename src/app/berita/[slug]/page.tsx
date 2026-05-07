@@ -9,10 +9,11 @@ import HeaderDetail from "@/components/HeaderDetail";
 import ShareAction from "@/components/ShareAction";
 import RelatedPosts from "@/components/RelatedPosts"; 
 import FollowUs from "@/components/FollowUs"; 
+import CommentSection from "@/components/CommentSection"; // IMPORT BARU
 import { Metadata } from "next";
 
 /**
- * 1. HELPERS: THUMBNAIL GENERATORS (Untuk SEO & Fallback)
+ * 1. HELPERS: THUMBNAIL GENERATORS
  */
 const getYouTubeThumbnail = (url: string) => {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -28,12 +29,12 @@ const getInstagramThumbnail = (url: string) => {
 };
 
 /**
- * 2. CUSTOM PORTABLE TEXT COMPONENTS (Render Embed Media)
+ * 2. CUSTOM PORTABLE TEXT COMPONENTS
  */
 const portableTextComponents = {
   types: {
     youtube: ({ value }: any) => {
-      const id = value.url?.match(/^.*(youtu.be\/|v\/|u\/\\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/)?.[2];
+      const id = value.url?.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/)?.[2];
       return id ? (
         <div className="my-8 relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-black">
           <iframe src={`https://www.youtube.com/embed/${id}`} title="YouTube" allowFullScreen className="absolute inset-0 w-full h-full" />
@@ -64,15 +65,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   if (!news) return { title: "Berita Tidak Ditemukan" };
   
-  // Ambil thumbnail terbaik untuk preview medsos
   const ogImage = news.mainImage || 
                   getYouTubeThumbnail(news.youtubeUrl) || 
                   getInstagramThumbnail(news.instagramUrl) || 
                   "/og-image.jpg";
 
   return {
-    // FIX: Cukup return judul berita saja. 
-    // Nama brand "Gerakan Rakyat BMS" akan otomatis ditambah dari template layout.tsx
     title: news.title, 
     description: news.excerpt || "Baca berita terbaru dari Gerakan Rakyat Banyumas",
     openGraph: {
@@ -126,7 +124,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <div className="lg:col-span-8">
               
-              {/* JUDUL TEGAK (TEGAS) */}
+              {/* JUDUL */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-[1.15] tracking-tight">
                 {news.title}
               </h1>
@@ -158,7 +156,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 </div>
               </div>
 
-              {/* MEDIA HEADER: HANYA MUNCUL JIKA ADA GAMBAR UTAMA (Mencegah Double Media) */}
+              {/* MEDIA HEADER */}
               {news.mainImage && (
                 <figure className="mb-10 group">
                   <div className="relative h-[300px] md:h-[500px] w-full overflow-hidden rounded-[2rem] shadow-xl border-8 border-white bg-gray-50">
@@ -170,15 +168,18 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
                 </figure>
               )}
 
-              {/* ISI KONTEN (TIGHT SPACING) */}
+              {/* ISI KONTEN */}
               <article className="prose prose-xl max-w-none pb-0 first-letter:text-7xl first-letter:font-black first-letter:text-orange-600 first-letter:mr-3 first-letter:float-left">
                 <PortableText value={news.body} components={portableTextComponents} />
               </article>
 
-              {/* RELATED POSTS (TIGHT MARGIN) */}
+              {/* RELATED POSTS SECTION */}
               <div className="mt-4">
                  <RelatedPosts posts={relatedPosts} />
               </div>
+
+              {/* COMMENT SECTION (DI TARUH DI BAWAH RELATED POSTS) */}
+              <CommentSection postSlug={slug} />
             </div>
 
             {/* SIDEBAR */}
