@@ -6,7 +6,6 @@ import { MessageSquare, Github, Chrome, Send, LogOut, User } from "lucide-react"
 import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
 
-// Inisialisasi Supabase
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -18,7 +17,6 @@ export default function CommentSection({ postSlug }: { postSlug: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commentsList, setCommentsList] = useState<any[]>([]);
 
-  // 1. Ambil Komentar dari Supabase
   const fetchComments = async () => {
     const { data, error } = await supabase
       .from("comments")
@@ -33,7 +31,6 @@ export default function CommentSection({ postSlug }: { postSlug: string }) {
     fetchComments();
   }, [postSlug]);
 
-  // 2. Kirim Komentar (Langsung Approved)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment || !session) return;
@@ -46,13 +43,12 @@ export default function CommentSection({ postSlug }: { postSlug: string }) {
         user_email: session.user?.email,
         user_image: session.user?.image,
         content: comment,
-        // is_approved otomatis true dari database
       },
     ]);
 
     if (!error) {
       setComment("");
-      fetchComments(); // Refresh list agar komentar baru muncul
+      fetchComments();
     }
     setIsSubmitting(false);
   };
@@ -73,7 +69,6 @@ export default function CommentSection({ postSlug }: { postSlug: string }) {
         </h3>
       </div>
 
-      {/* FORM INPUT KOMENTAR */}
       {!session ? (
         <div className="bg-gray-50 rounded-[2rem] p-8 text-center border border-dashed border-gray-200">
           <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.3em] mb-6">
@@ -92,8 +87,15 @@ export default function CommentSection({ postSlug }: { postSlug: string }) {
         <div className="bg-white border border-gray-100 rounded-[2rem] p-6 shadow-sm mb-12">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-orange-100">
-                <Image src={session.user?.image || "/placeholder.jpg"} alt="User" fill className="object-cover" />
+              <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-orange-100 bg-gray-100">
+                {/* FIX: Tambahkan unoptimized */}
+                <Image 
+                  src={session.user?.image || "/placeholder.jpg"} 
+                  alt="User" 
+                  fill 
+                  className="object-cover"
+                  unoptimized 
+                />
               </div>
               <div>
                 <p className="text-[10px] font-black text-gray-900 uppercase tracking-tight">{session.user?.name}</p>
@@ -120,14 +122,19 @@ export default function CommentSection({ postSlug }: { postSlug: string }) {
         </div>
       )}
 
-      {/* DAFTAR KOMENTAR */}
       <div className="space-y-8">
         {commentsList.length > 0 ? (
           commentsList.map((c) => (
             <div key={c.id} className="flex gap-4 animate-in fade-in slide-in-from-bottom-2">
-              <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-100">
+              <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
                 {c.user_image ? (
-                  <Image src={c.user_image} alt={c.user_name} fill className="object-cover" />
+                  <Image 
+                    src={c.user_image} 
+                    alt={c.user_name} 
+                    fill 
+                    className="object-cover"
+                    unoptimized 
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-300"><User size={20} /></div>
                 )}
